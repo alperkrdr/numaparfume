@@ -1,0 +1,28 @@
+{
+  "siteName": "Numa Parfume",
+  "siteSlogan": "Benzersiz Benzerlik",
+  "siteDescription": "Numa Parfume ile benzersiz benzerlik deneyimi yaşayın.",
+  "heroImage": "https://images.pexels.com/photos/965989/pexels-photo-965989.jpeg",
+  "logoImage": "/cb41ce71-b8c6-4741-91ba-5a88fca6de7b.jpeg",
+  "contactInfo": {
+    "email": "info@numaparfume.com",
+    "phone": "+90 (555) 123 45 67",
+    "address": "İstanbul, Türkiye\nParfüm Sokağı No: 123"
+  },
+  "socialMedia": {
+    "instagram": "https://instagram.com/numaparfume",
+    "facebook": "https://facebook.com/numaparfume",
+    "twitter": "https://twitter.com/numaparfume"
+  },
+  "seo": {
+    "metaTitle": "Numa Parfume - Benzersiz Benzerlik",
+    "metaDescription": "Numa Parfume ile benzersiz benzerlik deneyimi yaşayın.",
+    "keywords": ["parfüm", "kadın parfümü", "erkek parfümü", "unisex parfüm", "numa parfume"]
+  },
+  "geminiSettings": {
+    "apiKey": "",
+    "isActive": false,
+    "dailyPostTime": "09:00"
+  },
+  "updatedAt": "REQUEST_TIME"
+} 

@@ -1,0 +1,27 @@
+{
+  "name": "Chanel No. 5 Benzeri",
+  "originalName": "Chanel No. 5",
+  "description": "Klasik ve zamansız bir parfüm.",
+  "price": 299,
+  "originalPrice": 399,
+  "image": "https://images.pexels.com/photos/965989/pexels-photo-965989.jpeg",
+  "images": [
+    "https://images.pexels.com/photos/965989/pexels-photo-965989.jpeg",
+    "https://images.pexels.com/photos/1190829/pexels-photo-1190829.jpeg"
+  ],
+  "category": "kadın",
+  "brand": "Numa Parfume",
+  "originalBrand": "Chanel",
+  "size": "50ml",
+  "inStock": true,
+  "featured": true,
+  "shopierLink": "https://shopier.com/sample-product-1",
+  "notes": {
+    "top": ["Bergamot", "Limon", "Neroli"],
+    "middle": ["Gül", "Yasemin", "Zambak"],
+    "base": ["Sandal Ağacı", "Vanilya", "Misk"]
+  },
+  "seoKeywords": ["chanel no 5", "klasik parfüm", "kadın parfümü", "çiçeksi parfüm"],
+  "createdAt": "REQUEST_TIME",
+  "updatedAt": "REQUEST_TIME"
+} 

@@ -1,0 +1,75 @@
+.prose {
+  color: #333;
+  line-height: 1.7;
+}
+
+.prose h1,
+.prose h2,
+.prose h3 {
+  color: #111;
+  font-weight: 700;
+  margin-top: 2em;
+  margin-bottom: 1em;
+  line-height: 1.2;
+}
+
+.prose h1 {
+  font-size: 2.25rem; /* 36px */
+}
+
+.prose h2 {
+  font-size: 1.875rem; /* 30px */
+}
+
+.prose h3 {
+  font-size: 1.5rem; /* 24px */
+}
+
+.prose p {
+  margin-bottom: 1.25em;
+  font-size: 1.125rem; /* 18px */
+  color: #4A5568; /* gray-700 */
+}
+
+.prose strong,
+.prose b {
+  font-weight: 600;
+  color: #000;
+}
+
+.prose blockquote {
+  margin-left: 0;
+  margin-right: 0;
+  padding-left: 1em;
+  border-left: 0.25em solid #A0AEC0; /* gray-400 */
+  font-style: italic;
+  color: #718096; /* gray-600 */
+}
+
+.prose ul,
+.prose ol {
+  padding-left: 1.5em;
+  margin-bottom: 1.25em;
+}
+
+.prose li > p {
+  margin-bottom: 0.5em;
+}
+
+.prose a {
+  color: #2B6CB0; /* blue-700 */
+  text-decoration: none;
+  border-bottom: 1px solid #2B6CB0;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.prose a:hover {
+  color: #2C5282; /* blue-800 */
+  border-color: #2C5282;
+}
+
+/* Tırnak içini kalın göstermek için (JS ile yapılacak manipülasyon sonrası) */
+.prose .quoted-bold {
+    font-weight: 700;
+    color: #000;
+} 

@@ -1,0 +1,49 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Bu fonksiyon, girip yapan kullanicinin admin olup olmadigini kontrol eder.
+    // Admin e-posta adresleri: adminConfig.ts dosyasindaki listeyle eslesmelidir
+    function isAdmin() {
+      return request.auth != null && (
+        request.auth.token.email == "admin@numaparfume.com" ||
+        request.auth.token.email == "numa@admin.com" ||
+        request.auth.token.email == "admin@email.com"
+      );
+    }
+
+    // --- GENEL KURALLAR ---
+
+    // 1. KURAL: Adminlere her yerde tam okuma ve yazma izni ver.
+    // Bu kural, admin kullanicisinin tum koleksiyonlarda kisitlama olmadan
+    // veri eklemesini, silmesini ve guncellemesini saglar.
+    match /{document=**} {
+      allow read, write: if isAdmin();
+    }
+
+    // 2. KURAL: Herkesin (ziyaretciler dahil) herkese acik verileri okumasina izin ver.
+    // Bu kurallar, sitenin halka acik kisimlarinin calismasi icin gereklidir.
+    // Admin olmayanlar bu koleksiyonlara YAZAMAZ.
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /forum-posts/{postId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Ayarlar icin kurallar
+    // Sadece adminler okuyabilir ve yazabilir
+    match /settings/{settingsId} {
+      allow read, write: if isAdmin();
+    }
+    
+    // Diger tum koleksiyonlar icin varsayilan olarak erisimi engelle
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+} 
