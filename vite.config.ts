@@ -7,4 +7,12 @@ export default defineConfig({
   optimizeDeps: {
     exclude: ['lucide-react'],
   },
+  server: {
+    host: true, // Allow external access
+    allowedHosts: [
+      'localhost',
+      '.trycloudflare.com', // Allow all cloudflare tunnel subdomains
+      'hostels-answered-lou-actions.trycloudflare.com' // Specific tunnel domain
+    ]
+  }
 });

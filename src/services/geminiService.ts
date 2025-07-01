@@ -2,8 +2,8 @@ import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/ge
 import { createClient } from 'pexels';
 import { ForumPost } from '../types';
 
-const geminiApiKey = import.meta.env.VITE_GEMINI_API_KEY;
-const pexelsApiKey = import.meta.env.VITE_PEXELS_API_KEY;
+const geminiApiKey = import.meta.env.VITE_GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
+const pexelsApiKey = import.meta.env.VITE_PEXELS_API_KEY || process.env.VITE_PEXELS_API_KEY;
 
 let autoGenerationIntervalId: NodeJS.Timeout | null = null;
 
