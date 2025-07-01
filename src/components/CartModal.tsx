@@ -92,11 +92,18 @@ const CartModal: React.FC<CartModalProps> = ({
           name: user.name,
           email: user.email,
           phone: user.phone
-        }
+        },
+        // Kampanya indirimi bilgisi
+        campaignData?.campaignApplied && campaignData.campaignTitle ? {
+          discountAmount: campaignData.discountAmount,
+          campaignTitle: campaignData.campaignTitle
+        } : undefined
       );
 
-      // Ödeme sayfasına yönlendir
-      window.open(paymentUrl, '_blank');
+      console.log('🚀 Ödeme sayfasına yönlendiriliyor:', paymentUrl);
+      
+      // Ödeme sayfasına yönlendir (aynı sekmede)
+      window.location.href = paymentUrl;
       
       // Sepeti temizle
       clearCart();

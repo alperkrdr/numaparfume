@@ -1,17 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Header from './components/Header';
 import Hero from './components/Hero';
 import ProductGrid from './components/ProductGrid';
-import ProductDetail from './components/ProductDetail';
-import CollectionPage from './components/CollectionPage';
-import CategoryPage from './components/CategoryPage';
-import FeaturedPage from './components/FeaturedPage';
 import Footer from './components/Footer';
-import Forum from './components/Forum';
-import { AdminPanel } from './components/AdminPanel';
 import { useProducts } from './hooks/useProducts';
 import { ForumService } from './services/forumService';
+
+// Lazy load components for better performance
+const ProductDetail = lazy(() => import('./components/ProductDetail'));
+const CollectionPage = lazy(() => import('./components/CollectionPage'));
+const CategoryPage = lazy(() => import('./components/CategoryPage'));
+const FeaturedPage = lazy(() => import('./components/FeaturedPage'));
+const Forum = lazy(() => import('./components/Forum'));
+const AdminPanel = lazy(() => import('./components/AdminPanel').then(module => ({ default: module.AdminPanel })));
+
+// Loading spinner component
+const LoadingSpinner = () => (
+  <div className="min-h-screen flex items-center justify-center">
+    <div className="flex flex-col items-center gap-4">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+      <p className="text-gray-600">Yükleniyor...</p>
+    </div>
+  </div>
+);
 
 function App() {
   const { products, loading, searchProducts, getProductsByCategory, getFeaturedProducts } = useProducts();
@@ -69,51 +81,55 @@ function App() {
     <Router>
       <div className="min-h-screen bg-white">
         <Routes>
-          <Route path="/admin" element={<AdminPanel />} />
+          <Route path="/admin" element={
+            <Suspense fallback={<LoadingSpinner />}>
+              <AdminPanel />
+            </Suspense>
+          } />
           
           {/* Product Detail Page */}
           <Route path="/product/:id" element={
-            <>
+            <Suspense fallback={<LoadingSpinner />}>
               <Header onSearch={handleSearch} onCategorySelect={handleCategorySelect} />
               <ProductDetail />
               <Footer />
-            </>
+            </Suspense>
           } />
           
           {/* Collection Page */}
           <Route path="/collection" element={
-            <>
+            <Suspense fallback={<LoadingSpinner />}>
               <Header onSearch={handleSearch} onCategorySelect={handleCategorySelect} />
               <CollectionPage />
               <Footer />
-            </>
+            </Suspense>
           } />
           
           {/* Category Pages */}
           <Route path="/category/:category" element={
-            <>
+            <Suspense fallback={<LoadingSpinner />}>
               <Header onSearch={handleSearch} onCategorySelect={handleCategorySelect} />
               <CategoryPage />
               <Footer />
-            </>
+            </Suspense>
           } />
           
           {/* Featured Page */}
           <Route path="/featured" element={
-            <>
+            <Suspense fallback={<LoadingSpinner />}>
               <Header onSearch={handleSearch} onCategorySelect={handleCategorySelect} />
               <FeaturedPage />
               <Footer />
-            </>
+            </Suspense>
           } />
           
           {/* Forum */}
           <Route path="/forum" element={
-            <>
+            <Suspense fallback={<LoadingSpinner />}>
               <Header onSearch={handleSearch} onCategorySelect={handleCategorySelect} />
               <Forum />
               <Footer />
-            </>
+            </Suspense>
           } />
           
           {/* Payment Pages */}

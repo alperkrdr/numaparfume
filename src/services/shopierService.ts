@@ -76,7 +76,7 @@ export class ShopierService {
     }
   }
 
-  // Sepet için ödeme linki oluştur
+  // Sepet için ödeme linki oluştur (kampanya desteği ile)
   static async createCartPayment(
     cartItems: Array<{
       product: ShopierProduct;
@@ -86,6 +86,10 @@ export class ShopierService {
       name: string;
       email: string;
       phone?: string;
+    },
+    discountInfo?: {
+      discountAmount: number;
+      campaignTitle: string;
     }
   ): Promise<string> {
     try {
@@ -95,15 +99,28 @@ export class ShopierService {
         price: item.product.price * item.quantity
       }));
 
+      // Kampanya indirimi varsa ayrı bir ürün olarak ekle
+      if (discountInfo && discountInfo.discountAmount > 0) {
+        products.push({
+          name: `${discountInfo.campaignTitle} - İndirim`,
+          price: -discountInfo.discountAmount, // Negatif fiyat
+          currency: 'TRY',
+          description: 'Kampanya indirimi',
+          category: 'discount'
+        });
+      }
+
       const orderData: ShopierOrder = {
         products,
         buyer_name: buyerInfo.name,
         buyer_email: buyerInfo.email,
         buyer_phone: buyerInfo.phone,
-        success_url: `${window.location.origin}/payment-success`,
-        fail_url: `${window.location.origin}/payment-failed`,
+        success_url: `${window.location.origin}/payment-success?success=1`,
+        fail_url: `${window.location.origin}/payment-failed?error=1`,
         callback_url: `${window.location.origin}/api/shopier-callback`
       };
+
+      console.log('📦 Shopier sipariş verisi:', orderData);
 
       const response = await fetch(`${this.API_BASE_URL}/orders`, {
         method: 'POST',
@@ -115,18 +132,22 @@ export class ShopierService {
       });
 
       if (!response.ok) {
-        throw new Error(`Shopier API Error: ${response.status}`);
+        const errorText = await response.text();
+        console.error('Shopier API Error Response:', errorText);
+        throw new Error(`Shopier API Error: ${response.status} - ${errorText}`);
       }
 
       const result: ShopierResponse = await response.json();
+      console.log('📋 Shopier yanıtı:', result);
       
       if (!result.success || !result.data?.payment_url) {
         throw new Error(result.error || 'Ödeme linki oluşturulamadı');
       }
 
+      console.log('🔗 Ödeme URL\'si:', result.data.payment_url);
       return result.data.payment_url;
     } catch (error) {
-      console.error('Error creating cart payment:', error);
+      console.error('❌ Sepet ödeme hatası:', error);
       throw new Error('Sepet ödemesi başlatılamadı. Lütfen tekrar deneyin.');
     }
   }

@@ -27,6 +27,7 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onCategorySelect }) => {
   const {
     cartItems,
     isCartOpen,
+    isUpdating,
     updateQuantity,
     removeFromCart,
     clearCart,
@@ -135,11 +136,15 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onCategorySelect }) => {
               
               <button 
                 onClick={openCart}
-                className="relative text-gray-700 hover:text-primary-600 transition-colors"
+                className={`relative text-gray-700 hover:text-primary-600 transition-all duration-300 ${
+                  isUpdating ? 'scale-110' : ''
+                }`}
               >
-                <ShoppingBag size={20} />
+                <ShoppingBag size={20} className={isUpdating ? 'animate-pulse' : ''} />
                 {getCartItemCount() > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-primary-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                  <span className={`absolute -top-2 -right-2 bg-primary-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center transition-all duration-300 ${
+                    isUpdating ? 'scale-125 bg-green-500' : ''
+                  }`}>
                     {getCartItemCount()}
                   </span>
                 )}

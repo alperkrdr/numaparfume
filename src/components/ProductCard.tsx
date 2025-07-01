@@ -5,6 +5,7 @@ import { ShoppingBag, Heart, Star, Package, Plus } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useCart } from '../hooks/useCart';
 import { ShopierService } from '../services/shopierService';
+import OptimizedImage from './OptimizedImage';
 
 interface ProductCardProps {
   product: Product;
@@ -12,7 +13,6 @@ interface ProductCardProps {
 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const [isLiked, setIsLiked] = useState(false);
-  const [imageLoaded, setImageLoaded] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const { user, openLoginModal } = useAuth();
   const { addToCart } = useCart();
@@ -104,18 +104,13 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     <div className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden border border-gray-100 hover:border-primary-200 transform hover:-translate-y-2">
       {/* Image Container */}
       <div className="relative overflow-hidden bg-gray-50 cursor-pointer" onClick={handleProductClick}>
-        {!imageLoaded && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="animate-pulse bg-gray-200 w-full h-64"></div>
-          </div>
-        )}
-        <img
+        <OptimizedImage
           src={product.image}
           alt={product.name}
-          className={`w-full h-64 object-cover group-hover:scale-110 transition-transform duration-700 ${
-            imageLoaded ? 'opacity-100' : 'opacity-0'
-          }`}
-          onLoad={() => setImageLoaded(true)}
+          width={300}
+          height={256}
+          className="w-full h-64 group-hover:scale-110 transition-transform duration-700"
+          loading="lazy"
         />
         
         {/* Badges */}
