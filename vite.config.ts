@@ -8,6 +8,11 @@ export default defineConfig({
     exclude: ['lucide-react'],
   },
   base: '/', // Railway veya Netlify gibi ortamlarda kök dizine deploy için
+  build: {
+    rollupOptions: {
+      input: 'index.html', // Sadece ana giriş dosyanız bundle edilecek
+    },
+  },
   server: {
     host: true, // Allow external access
     allowedHosts: [
