@@ -10,8 +10,14 @@ export default defineConfig({
   base: '/', // Railway veya Netlify gibi ortamlarda kök dizine deploy için
   build: {
     rollupOptions: {
-      input: 'index.html', // Sadece ana giriş dosyanız bundle edilecek
+      input: 'index.html'
     },
+    commonjsOptions: {
+      transformMixedEsModules: true
+    }
+  },
+  define: {
+    global: 'globalThis', // Fix global is not defined error
   },
   server: {
     host: true, // Allow external access
