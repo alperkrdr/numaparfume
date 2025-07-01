@@ -1,22 +1,13 @@
 import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/generative-ai";
-import { createClient } from 'pexels';
 import { ForumPost } from '../types';
 
-const geminiApiKey = import.meta.env.VITE_GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
-const pexelsApiKey = import.meta.env.VITE_PEXELS_API_KEY || process.env.VITE_PEXELS_API_KEY;
+const geminiApiKey = import.meta.env.VITE_GEMINI_API_KEY;
 
 let autoGenerationIntervalId: NodeJS.Timeout | null = null;
 
-const getPexelsClient = () => {
-  if (!pexelsApiKey) {
-    console.warn("Pexels API key is not set. Cannot fetch images.");
-    return null;
-  }
-  return createClient(pexelsApiKey);
-};
-
+// Dummy image selector (Unsplash) — avoids Node-only Pexels SDK
 const searchImageOnPexels = async (query: string): Promise<string> => {
-  // Perfüm ile ilgili varsayılan görseller (Unsplash'den CORS dostu)
+  // Parfüm ile ilgili varsayılan görseller (Unsplash'den CORS dostu)
   const perfumeImages = [
     'https://images.unsplash.com/photo-1541643600914-78b084683601?w=800&q=80', // Perfume bottles
     'https://images.unsplash.com/photo-1588405748880-12d1d2a59d75?w=800&q=80', // Essential oils
