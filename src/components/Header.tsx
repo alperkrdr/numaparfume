@@ -3,7 +3,7 @@ import { Search, Menu, X, ShoppingBag, User, MessageSquare, LogOut } from 'lucid
 import { useSettings } from '../hooks/useSettings';
 import { useAuth } from '../hooks/useAuth';
 import { useCart } from '../hooks/useCart';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import LoginModal from './LoginModal';
 import CartModal from './CartModal';
 
@@ -36,6 +36,7 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onCategorySelect }) => {
     closeCart
   } = useCart();
   const location = useLocation();
+  const navigate = useNavigate();
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,11 +52,19 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onCategorySelect }) => {
   };
 
   const categories = [
-    { name: 'Tümü', value: 'all' },
-    { name: 'Kadın', value: 'kadın' },
-    { name: 'Erkek', value: 'erkek' },
-    { name: 'Unisex', value: 'unisex' }
+    { name: 'Tümü', value: 'all', path: null },
+    { name: 'Kadın', value: 'kadın', path: '/category/kadın' },
+    { name: 'Erkek', value: 'erkek', path: '/category/erkek' },
+    { name: 'Unisex', value: 'unisex', path: '/category/unisex' }
   ];
+
+  const handleCategoryClick = (category: typeof categories[0]) => {
+    if (category.path) {
+      navigate(category.path);
+    } else {
+      onCategorySelect(category.value);
+    }
+  };
 
   if (!settings) {
     return null; // Loading state
@@ -146,22 +155,34 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onCategorySelect }) => {
           </div>
 
           {/* Navigation - Desktop */}
-          {location.pathname === '/' && (
-            <nav className="hidden md:block border-t border-gray-100">
-              <div className="flex items-center justify-center space-x-8 py-4">
-                {categories.map((category) => (
-                  <button
-                    key={category.value}
-                    onClick={() => onCategorySelect(category.value)}
-                    className="text-gray-700 hover:text-primary-600 font-medium transition-colors relative group"
-                  >
-                    {category.name}
-                    <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary-600 transition-all duration-300 group-hover:w-full"></span>
-                  </button>
-                ))}
-              </div>
-            </nav>
-          )}
+          <nav className="hidden md:block border-t border-gray-100">
+            <div className="flex items-center justify-center space-x-8 py-4">
+              {categories.map((category) => (
+                <button
+                  key={category.value}
+                  onClick={() => handleCategoryClick(category)}
+                  className="text-gray-700 hover:text-primary-600 font-medium transition-colors relative group"
+                >
+                  {category.name}
+                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary-600 transition-all duration-300 group-hover:w-full"></span>
+                </button>
+              ))}
+              <Link
+                to="/collection"
+                className="text-gray-700 hover:text-primary-600 font-medium transition-colors relative group"
+              >
+                Koleksiyon
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary-600 transition-all duration-300 group-hover:w-full"></span>
+              </Link>
+              <Link
+                to="/featured"
+                className="text-gray-700 hover:text-primary-600 font-medium transition-colors relative group"
+              >
+                Öne Çıkanlar
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary-600 transition-all duration-300 group-hover:w-full"></span>
+              </Link>
+            </div>
+          </nav>
 
           {/* Mobile Menu */}
           {isMenuOpen && (
@@ -194,11 +215,11 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onCategorySelect }) => {
                 >
                   Forum
                 </Link>
-                {location.pathname === '/' && categories.map((category) => (
+                {categories.map((category) => (
                   <button
                     key={category.value}
                     onClick={() => {
-                      onCategorySelect(category.value);
+                      handleCategoryClick(category);
                       setIsMenuOpen(false);
                     }}
                     className="block w-full text-left py-2 px-4 text-gray-700 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-colors"
@@ -206,6 +227,20 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onCategorySelect }) => {
                     {category.name}
                   </button>
                 ))}
+                <Link
+                  to="/collection"
+                  className="block w-full text-left py-2 px-4 text-gray-700 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-colors"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Koleksiyon
+                </Link>
+                <Link
+                  to="/featured"
+                  className="block w-full text-left py-2 px-4 text-gray-700 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-colors"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Öne Çıkanlar
+                </Link>
                 <button 
                   onClick={() => {
                     handleUserAction();

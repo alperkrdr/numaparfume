@@ -3,6 +3,10 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Header from './components/Header';
 import Hero from './components/Hero';
 import ProductGrid from './components/ProductGrid';
+import ProductDetail from './components/ProductDetail';
+import CollectionPage from './components/CollectionPage';
+import CategoryPage from './components/CategoryPage';
+import FeaturedPage from './components/FeaturedPage';
 import Footer from './components/Footer';
 import Forum from './components/Forum';
 import { AdminPanel } from './components/AdminPanel';
@@ -51,17 +55,7 @@ function App() {
     setCurrentView('all');
   };
 
-  const handleShowFeatured = () => {
-    setCurrentView('featured');
-    setSelectedCategory('all');
-    setFilteredProducts(getFeaturedProducts());
-  };
 
-  const handleShowCollection = () => {
-    setCurrentView('collection');
-    setSelectedCategory('all');
-    setFilteredProducts(getFeaturedProducts());
-  };
 
   const getViewTitle = () => {
     if (currentView === 'featured') return 'Öne Çıkan Parfümler';
@@ -76,6 +70,44 @@ function App() {
       <div className="min-h-screen bg-white">
         <Routes>
           <Route path="/admin" element={<AdminPanel />} />
+          
+          {/* Product Detail Page */}
+          <Route path="/product/:id" element={
+            <>
+              <Header onSearch={handleSearch} onCategorySelect={handleCategorySelect} />
+              <ProductDetail />
+              <Footer />
+            </>
+          } />
+          
+          {/* Collection Page */}
+          <Route path="/collection" element={
+            <>
+              <Header onSearch={handleSearch} onCategorySelect={handleCategorySelect} />
+              <CollectionPage />
+              <Footer />
+            </>
+          } />
+          
+          {/* Category Pages */}
+          <Route path="/category/:category" element={
+            <>
+              <Header onSearch={handleSearch} onCategorySelect={handleCategorySelect} />
+              <CategoryPage />
+              <Footer />
+            </>
+          } />
+          
+          {/* Featured Page */}
+          <Route path="/featured" element={
+            <>
+              <Header onSearch={handleSearch} onCategorySelect={handleCategorySelect} />
+              <FeaturedPage />
+              <Footer />
+            </>
+          } />
+          
+          {/* Forum */}
           <Route path="/forum" element={
             <>
               <Header onSearch={handleSearch} onCategorySelect={handleCategorySelect} />
@@ -83,6 +115,8 @@ function App() {
               <Footer />
             </>
           } />
+          
+          {/* Payment Pages */}
           <Route path="/payment-success" element={
             <div className="min-h-screen flex items-center justify-center bg-green-50">
               <div className="text-center">
@@ -115,13 +149,12 @@ function App() {
               </div>
             </div>
           } />
+          
+          {/* Home Page */}
           <Route path="/" element={
             <>
               <Header onSearch={handleSearch} onCategorySelect={handleCategorySelect} />
-              <Hero 
-                onShowFeatured={handleShowFeatured}
-                onShowCollection={handleShowCollection}
-              />
+              <Hero />
               <main className="container mx-auto px-4 py-12">
                 <ProductGrid 
                   products={filteredProducts} 

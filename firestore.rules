@@ -36,9 +36,10 @@ service cloud.firestore {
     }
 
     // Ayarlar icin kurallar
-    // Sadece adminler okuyabilir ve yazabilir
+    // Herkes okuyabilir, sadece adminler yazabilir
     match /settings/{settingsId} {
-      allow read, write: if isAdmin();
+      allow read: if true;
+      allow write: if isAdmin();
     }
     
     // Diger tum koleksiyonlar icin varsayilan olarak erisimi engelle

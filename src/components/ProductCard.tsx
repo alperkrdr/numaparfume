@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Product } from '../types';
 import { ShoppingBag, Heart, Star, Package, Plus } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
@@ -15,6 +16,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const { user, openLoginModal } = useAuth();
   const { addToCart } = useCart();
+  const navigate = useNavigate();
+
+  const handleProductClick = () => {
+    navigate(`/product/${product.id}`);
+  };
 
   const handleDirectPurchase = async () => {
     console.log('🛒 Hemen Satın Al butonu tıklandı', { user, product });
@@ -97,7 +103,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   return (
     <div className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden border border-gray-100 hover:border-primary-200 transform hover:-translate-y-2">
       {/* Image Container */}
-      <div className="relative overflow-hidden bg-gray-50">
+      <div className="relative overflow-hidden bg-gray-50 cursor-pointer" onClick={handleProductClick}>
         {!imageLoaded && (
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="animate-pulse bg-gray-200 w-full h-64"></div>
@@ -168,7 +174,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         </div>
 
         {/* Product Name */}
-        <h3 className="font-serif font-semibold text-lg text-charcoal-900 mb-2 line-clamp-1">
+        <h3 
+          className="font-serif font-semibold text-lg text-charcoal-900 mb-2 line-clamp-1 cursor-pointer hover:text-primary-600 transition-colors"
+          onClick={handleProductClick}
+        >
           {product.name}
         </h3>
 
