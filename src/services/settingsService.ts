@@ -38,6 +38,16 @@ export const DEFAULT_SETTINGS: Omit<SiteSettings, 'id'> = {
     dailyPostTime: '09:00',
     lastPostDate: undefined
   },
+  campaignSettings: {
+    isActive: false,
+    title: 'Özel İndirim Kampanyası',
+    description: 'Belirli bir tutarın üzerindeki alışverişlerde indirim fırsatı!',
+    minAmount: 500,
+    discountType: 'percentage',
+    discountValue: 10,
+    startDate: undefined,
+    endDate: undefined
+  },
   updatedAt: new Date()
 };
 

@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { X, Plus, Minus, Trash2, ShoppingBag, CreditCard } from 'lucide-react';
+import { X, Plus, Minus, Trash2, ShoppingBag, CreditCard, Tag, Gift } from 'lucide-react';
 import { CartItem } from '../hooks/useCart';
 import { User } from '../hooks/useAuth';
 import { ShopierService } from '../services/shopierService';
+import { CampaignService } from '../services/campaignService';
+import { useSettings } from '../hooks/useSettings';
 
 interface CartModalProps {
   isOpen: boolean;
@@ -28,6 +30,17 @@ const CartModal: React.FC<CartModalProps> = ({
   onLoginRequired
 }) => {
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const { settings } = useSettings();
+
+  // Kampanya hesaplama
+  const cartTotal = getCartTotal();
+  const campaignData = settings?.campaignSettings 
+    ? CampaignService.calculateCampaignDiscount(cartTotal, settings.campaignSettings)
+    : null;
+  
+  const campaignMessage = settings?.campaignSettings 
+    ? CampaignService.getCampaignMessage(cartTotal, settings.campaignSettings)
+    : null;
 
   const handleCheckout = async () => {
     if (!user) {
@@ -43,6 +56,9 @@ const CartModal: React.FC<CartModalProps> = ({
     setIsProcessingPayment(true);
 
     try {
+      // Kampanyalı fiyat ile ödeme
+      const finalTotal = campaignData?.campaignApplied ? campaignData.finalTotal : cartTotal;
+      
       const shopierCartItems = cartItems.map(item => ({
         product: {
           name: item.product.name,
@@ -54,6 +70,21 @@ const CartModal: React.FC<CartModalProps> = ({
         },
         quantity: item.quantity
       }));
+
+      // Eğer kampanya varsa, son ürün olarak indirim kalemi ekle
+      if (campaignData?.campaignApplied && campaignData.discountAmount > 0) {
+        shopierCartItems.push({
+          product: {
+            name: `${campaignData.campaignTitle} - İndirim`,
+            price: -campaignData.discountAmount, // Negatif fiyat
+            currency: 'TRY',
+            description: campaignData.campaignDescription || 'Kampanya indirimi',
+            image_url: '',
+            category: 'unisex'
+          },
+          quantity: 1
+        });
+      }
 
       const paymentUrl = await ShopierService.createCartPayment(
         shopierCartItems,
@@ -158,9 +189,59 @@ const CartModal: React.FC<CartModalProps> = ({
         {/* Footer */}
         {cartItems.length > 0 && (
           <div className="p-6 border-t border-gray-200">
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-lg font-semibold text-charcoal-900">Toplam:</span>
-              <span className="text-2xl font-bold text-primary-600">₺{getCartTotal()}</span>
+            {/* Campaign Message */}
+            {campaignMessage && (
+              <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <div className="flex items-center gap-2 text-yellow-800">
+                  <Gift size={16} />
+                  <span className="text-sm font-medium">{campaignMessage}</span>
+                </div>
+              </div>
+            )}
+
+            {/* Campaign Applied */}
+            {campaignData?.campaignApplied && (
+              <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                <div className="flex items-center gap-2 text-green-800 mb-2">
+                  <Tag size={16} />
+                  <span className="text-sm font-semibold">{campaignData.campaignTitle}</span>
+                </div>
+                <p className="text-xs text-green-700">{campaignData.campaignDescription}</p>
+              </div>
+            )}
+
+            {/* Price Summary */}
+            <div className="space-y-2 mb-4">
+              <div className="flex items-center justify-between">
+                <span className="text-gray-600">Ara Toplam:</span>
+                <span className="font-medium">₺{cartTotal.toLocaleString()}</span>
+              </div>
+              
+              {campaignData?.campaignApplied && campaignData.discountAmount > 0 && (
+                <div className="flex items-center justify-between text-green-600">
+                  <span className="flex items-center gap-1">
+                    <Tag size={14} />
+                    Kampanya İndirimi:
+                  </span>
+                  <span className="font-medium">-₺{campaignData.discountAmount.toLocaleString()}</span>
+                </div>
+              )}
+              
+              <hr className="border-gray-200" />
+              
+              <div className="flex items-center justify-between">
+                <span className="text-lg font-semibold text-charcoal-900">Toplam:</span>
+                <div className="text-right">
+                  {campaignData?.campaignApplied && campaignData.discountAmount > 0 ? (
+                    <>
+                      <div className="text-sm text-gray-500 line-through">₺{cartTotal.toLocaleString()}</div>
+                      <div className="text-2xl font-bold text-green-600">₺{campaignData.finalTotal.toLocaleString()}</div>
+                    </>
+                  ) : (
+                    <span className="text-2xl font-bold text-primary-600">₺{cartTotal.toLocaleString()}</span>
+                  )}
+                </div>
+              </div>
             </div>
 
             <div className="space-y-3">
@@ -174,7 +255,10 @@ const CartModal: React.FC<CartModalProps> = ({
                 ) : (
                   <>
                     <CreditCard size={18} />
-                    Ödemeye Geç
+                    {campaignData?.campaignApplied ? 
+                      `₺${campaignData.finalTotal.toLocaleString()} Öde` : 
+                      'Ödemeye Geç'
+                    }
                   </>
                 )}
               </button>

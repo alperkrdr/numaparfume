@@ -62,9 +62,20 @@ export interface SiteSettings {
     keywords: string[];
   };
   geminiSettings: {
+    apiKey: string;
     isActive: boolean;
     dailyPostTime: string;
     lastPostDate?: Date;
+  };
+  campaignSettings: {
+    isActive: boolean;
+    title: string;
+    description: string;
+    minAmount: number; // Minimum alım tutarı
+    discountType: 'percentage' | 'fixed'; // Yüzde veya sabit tutar
+    discountValue: number; // İndirim değeri
+    startDate?: Date;
+    endDate?: Date;
   };
   updatedAt: Date;
 }

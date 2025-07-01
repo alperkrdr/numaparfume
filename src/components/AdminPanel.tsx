@@ -130,6 +130,10 @@ export const AdminPanel: React.FC = () => {
           ...SettingsService.getDefaultSettings().geminiSettings,
           ...settings.geminiSettings,
         },
+        campaignSettings: {
+          ...SettingsService.getDefaultSettings().campaignSettings,
+          ...settings.campaignSettings,
+        },
       });
     }
   }, [settings]);
@@ -1204,6 +1208,198 @@ export const AdminPanel: React.FC = () => {
                         placeholder="parfüm, koku, esans, güzellik"
                       />
                     </div>
+                  </div>
+                </div>
+
+                {/* Kampanya Ayarları */}
+                <div className="bg-white p-6 rounded-lg border border-gray-200">
+                  <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                    <span className="text-green-600">🎯</span>
+                    Kampanya Ayarları
+                  </h3>
+                  
+                  <div className="space-y-4">
+                    {/* Kampanya Durumu */}
+                    <div className="flex items-center gap-3">
+                      <label className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={tempSettings.campaignSettings?.isActive || false}
+                          onChange={(e) => setTempSettings({ 
+                            ...tempSettings, 
+                            campaignSettings: { 
+                              ...tempSettings.campaignSettings, 
+                              isActive: e.target.checked 
+                            }
+                          })}
+                          className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                        />
+                        <span className="ml-2 text-sm font-medium text-gray-700">Kampanya Aktif</span>
+                      </label>
+                      {tempSettings.campaignSettings?.isActive && (
+                        <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">
+                          ✅ Aktif
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Kampanya Başlık ve Açıklama */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Kampanya Başlığı</label>
+                        <input
+                          type="text"
+                          value={tempSettings.campaignSettings?.title || ''}
+                          onChange={(e) => setTempSettings({ 
+                            ...tempSettings, 
+                            campaignSettings: { 
+                              ...tempSettings.campaignSettings, 
+                              title: e.target.value 
+                            }
+                          })}
+                          placeholder="Özel İndirim Kampanyası"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Minimum Alım Tutarı (₺)</label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="50"
+                          value={tempSettings.campaignSettings?.minAmount || 0}
+                          onChange={(e) => setTempSettings({ 
+                            ...tempSettings, 
+                            campaignSettings: { 
+                              ...tempSettings.campaignSettings, 
+                              minAmount: Number(e.target.value) 
+                            }
+                          })}
+                          placeholder="500"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Kampanya Açıklaması</label>
+                      <textarea
+                        value={tempSettings.campaignSettings?.description || ''}
+                        onChange={(e) => setTempSettings({ 
+                          ...tempSettings, 
+                          campaignSettings: { 
+                            ...tempSettings.campaignSettings, 
+                            description: e.target.value 
+                          }
+                        })}
+                        rows={2}
+                        placeholder="Belirli bir tutarın üzerindeki alışverişlerde indirim fırsatı!"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                      />
+                    </div>
+
+                    {/* İndirim Tipi ve Değeri */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">İndirim Tipi</label>
+                        <select
+                          value={tempSettings.campaignSettings?.discountType || 'percentage'}
+                          onChange={(e) => setTempSettings({ 
+                            ...tempSettings, 
+                            campaignSettings: { 
+                              ...tempSettings.campaignSettings, 
+                              discountType: e.target.value as 'percentage' | 'fixed'
+                            }
+                          })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                        >
+                          <option value="percentage">Yüzde İndirim (%)</option>
+                          <option value="fixed">Sabit Tutar İndirim (₺)</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          İndirim Değeri 
+                          {tempSettings.campaignSettings?.discountType === 'percentage' ? ' (%)' : ' (₺)'}
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          max={tempSettings.campaignSettings?.discountType === 'percentage' ? 100 : undefined}
+                          step={tempSettings.campaignSettings?.discountType === 'percentage' ? 1 : 10}
+                          value={tempSettings.campaignSettings?.discountValue || 0}
+                          onChange={(e) => setTempSettings({ 
+                            ...tempSettings, 
+                            campaignSettings: { 
+                              ...tempSettings.campaignSettings, 
+                              discountValue: Number(e.target.value) 
+                            }
+                          })}
+                          placeholder={tempSettings.campaignSettings?.discountType === 'percentage' ? '10' : '50'}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Kampanya Tarihleri (Opsiyonel) */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Başlangıç Tarihi (opsiyonel)</label>
+                        <input
+                          type="datetime-local"
+                          value={tempSettings.campaignSettings?.startDate ? 
+                            new Date(tempSettings.campaignSettings.startDate).toISOString().slice(0, 16) : ''}
+                          onChange={(e) => setTempSettings({ 
+                            ...tempSettings, 
+                            campaignSettings: { 
+                              ...tempSettings.campaignSettings, 
+                              startDate: e.target.value ? new Date(e.target.value) : undefined 
+                            }
+                          })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Bitiş Tarihi (opsiyonel)</label>
+                        <input
+                          type="datetime-local"
+                          value={tempSettings.campaignSettings?.endDate ? 
+                            new Date(tempSettings.campaignSettings.endDate).toISOString().slice(0, 16) : ''}
+                          onChange={(e) => setTempSettings({ 
+                            ...tempSettings, 
+                            campaignSettings: { 
+                              ...tempSettings.campaignSettings, 
+                              endDate: e.target.value ? new Date(e.target.value) : undefined 
+                            }
+                          })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Kampanya Önizleme */}
+                    {tempSettings.campaignSettings?.isActive && tempSettings.campaignSettings?.minAmount > 0 && (
+                      <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                        <h4 className="text-sm font-semibold text-green-800 mb-2">📋 Kampanya Önizleme</h4>
+                        <div className="text-sm text-green-700 space-y-1">
+                          <p><strong>Başlık:</strong> {tempSettings.campaignSettings.title}</p>
+                          <p><strong>Açıklama:</strong> {tempSettings.campaignSettings.description}</p>
+                          <p><strong>Minimum Tutar:</strong> ₺{tempSettings.campaignSettings.minAmount.toLocaleString()}</p>
+                          <p><strong>İndirim:</strong> 
+                            {tempSettings.campaignSettings.discountType === 'percentage' 
+                              ? `%${tempSettings.campaignSettings.discountValue} indirim`
+                              : `₺${tempSettings.campaignSettings.discountValue} indirim`
+                            }
+                          </p>
+                          {tempSettings.campaignSettings.startDate && (
+                            <p><strong>Başlangıç:</strong> {new Date(tempSettings.campaignSettings.startDate).toLocaleString('tr-TR')}</p>
+                          )}
+                          {tempSettings.campaignSettings.endDate && (
+                            <p><strong>Bitiş:</strong> {new Date(tempSettings.campaignSettings.endDate).toLocaleString('tr-TR')}</p>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 
