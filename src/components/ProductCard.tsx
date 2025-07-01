@@ -17,12 +17,16 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { addToCart } = useCart();
 
   const handleDirectPurchase = async () => {
+    console.log('🛒 Hemen Satın Al butonu tıklandı', { user, product });
+    
     if (!user) {
+      console.log('❌ Kullanıcı giriş yapmamış, login modal açılıyor');
       openLoginModal();
       return;
     }
 
     setIsProcessingPayment(true);
+    console.log('💳 Ödeme işlemi başlatılıyor...');
 
     try {
       const shopierProduct = {
@@ -34,6 +38,13 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         category: product.category
       };
 
+      console.log('📦 Shopier ürün verisi:', shopierProduct);
+      console.log('👤 Kullanıcı verisi:', {
+        name: user.name,
+        email: user.email,
+        phone: user.phone
+      });
+
       const paymentUrl = await ShopierService.createSingleProductPayment(
         shopierProduct,
         {
@@ -43,10 +54,12 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         }
       );
 
+      console.log('🔗 Ödeme URL\'si oluşturuldu:', paymentUrl);
+      
       // Ödeme sayfasına yönlendir
       window.open(paymentUrl, '_blank');
     } catch (error) {
-      console.error('Direct purchase error:', error);
+      console.error('❌ Direkt satın alma hatası:', error);
       alert('Ödeme işlemi başlatılamadı. Lütfen tekrar deneyin.');
     } finally {
       setIsProcessingPayment(false);
@@ -54,16 +67,27 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   };
 
   const handleAddToCart = () => {
-    addToCart(product, 1);
-    // Başarı bildirimi göster
-    const notification = document.createElement('div');
-    notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
-    notification.textContent = 'Ürün sepete eklendi!';
-    document.body.appendChild(notification);
+    console.log('🛍️ Sepete Ekle butonu tıklandı', { product });
     
-    setTimeout(() => {
-      document.body.removeChild(notification);
-    }, 3000);
+    try {
+      addToCart(product, 1);
+      console.log('✅ Ürün sepete eklendi');
+      
+      // Başarı bildirimi göster
+      const notification = document.createElement('div');
+      notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
+      notification.textContent = 'Ürün sepete eklendi!';
+      document.body.appendChild(notification);
+      
+      setTimeout(() => {
+        if (document.body.contains(notification)) {
+          document.body.removeChild(notification);
+        }
+      }, 3000);
+    } catch (error) {
+      console.error('❌ Sepete ekleme hatası:', error);
+      alert('Ürün sepete eklenirken bir hata oluştu.');
+    }
   };
 
   const discountPercentage = product.originalPrice 

@@ -15,15 +15,31 @@ const Hero: React.FC<HeroProps> = ({ onShowFeatured, onShowCollection }) => {
   const { settings } = useSettings();
 
   const handleShowFeatured = () => {
+    console.log('🎯 Öne Çıkanlar butonu tıklandı');
     const featured = getFeaturedProducts();
+    console.log('📦 Öne çıkan ürünler:', featured.length, featured);
+    
     if (featured.length > 0) {
+      console.log('✅ Öne çıkan ürünler bulundu, onShowFeatured çağrılıyor');
+      onShowFeatured();
+    } else {
+      console.log('❌ Öne çıkan ürün bulunamadı');
+      // Öne çıkan ürün yoksa da fonksiyonu çağıralım
       onShowFeatured();
     }
   };
 
   const handleShowCollection = () => {
+    console.log('🎯 Koleksiyonu Keşfet butonu tıklandı');
     const featured = getFeaturedProducts();
+    console.log('📦 Koleksiyon ürünleri:', featured.length, featured);
+    
     if (featured.length > 0) {
+      console.log('✅ Koleksiyon ürünleri bulundu, onShowCollection çağrılıyor');
+      onShowCollection();
+    } else {
+      console.log('❌ Koleksiyon ürünü bulunamadı');
+      // Öne çıkan ürün yoksa da fonksiyonu çağıralım
       onShowCollection();
     }
   };
