@@ -7,6 +7,7 @@ export default defineConfig({
   optimizeDeps: {
     exclude: ['lucide-react'],
   },
+  base: '/', // Railway veya Netlify gibi ortamlarda kök dizine deploy için
   server: {
     host: true, // Allow external access
     allowedHosts: [
