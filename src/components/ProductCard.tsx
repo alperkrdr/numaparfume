@@ -62,8 +62,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
       console.log('🔗 Ödeme URL\'si oluşturuldu:', paymentUrl);
       
-      // Ödeme sayfasına yönlendir
-      window.open(paymentUrl, '_blank');
+      // Ödeme sayfasına yönlendir (aynı sayfada)
+      console.log('🔄 Ödeme sayfasına yönlendiriliyor...');
+      window.location.href = paymentUrl;
     } catch (error) {
       console.error('❌ Direkt satın alma hatası:', error);
       alert('Ödeme işlemi başlatılamadı. Lütfen tekrar deneyin.');
@@ -72,26 +73,43 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     }
   };
 
-  const handleAddToCart = () => {
-    console.log('🛍️ Sepete Ekle butonu tıklandı', { product });
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
+
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (isAddingToCart) {
+      console.log('⏸️ Sepete ekleme işlemi devam ediyor, atlandı');
+      return;
+    }
+    
+    console.log('🛍️ Sepete Ekle butonu tıklandı', { 
+      productId: product.id, 
+      productName: product.name,
+      productPrice: product.price
+    });
+    
+    if (!product || !product.id) {
+      console.error('❌ Geçersiz ürün verisi:', product);
+      alert('Ürün bilgisi eksik. Lütfen sayfayı yenileyip tekrar deneyin.');
+      return;
+    }
     
     try {
+      setIsAddingToCart(true);
       addToCart(product, 1);
-      console.log('✅ Ürün sepete eklendi');
+      console.log('✅ addToCart fonksiyonu çağrıldı');
       
-      // Başarı bildirimi göster
-      const notification = document.createElement('div');
-      notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
-      notification.textContent = 'Ürün sepete eklendi!';
-      document.body.appendChild(notification);
-      
+      // 500ms sonra butonu tekrar kullanılabilir yap
       setTimeout(() => {
-        if (document.body.contains(notification)) {
-          document.body.removeChild(notification);
-        }
-      }, 3000);
+        setIsAddingToCart(false);
+        console.log('🔄 ProductCard isAddingToCart=false yapıldı');
+      }, 500);
+      
     } catch (error) {
       console.error('❌ Sepete ekleme hatası:', error);
+      setIsAddingToCart(false);
       alert('Ürün sepete eklenirken bir hata oluştu.');
     }
   };
@@ -149,10 +167,25 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         {/* Quick Add to Cart */}
         <button
           onClick={handleAddToCart}
-          disabled={!product.inStock}
-          className="absolute bottom-4 right-4 w-10 h-10 bg-primary-600 text-white rounded-full flex items-center justify-center hover:bg-primary-700 transition-all duration-300 opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={!product.inStock || isAddingToCart}
+          className={`absolute bottom-4 right-4 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500 opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl ${
+            isAddingToCart 
+              ? 'bg-green-500 text-white scale-110 animate-pulse' 
+              : 'bg-primary-600 text-white hover:bg-primary-700 hover:scale-105'
+          }`}
+          title={
+            !product.inStock 
+              ? 'Tükendi' 
+              : isAddingToCart 
+                ? 'Sepete Ekleniyor...' 
+                : 'Sepete Ekle'
+          }
         >
-          <Plus size={18} />
+          {isAddingToCart ? (
+            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+          ) : (
+            <Plus size={18} />
+          )}
         </button>
       </div>
 
@@ -218,22 +251,47 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             onClick={handleDirectPurchase}
             disabled={!product.inStock || isProcessingPayment}
             className={`w-full py-3 px-4 rounded-xl font-medium transition-all duration-300 flex items-center justify-center gap-2 ${
-              product.inStock
-                ? 'bg-primary-600 text-white hover:bg-primary-700 hover:shadow-lg transform hover:scale-105'
-                : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+              !product.inStock
+                ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                : isProcessingPayment
+                  ? 'bg-green-500 text-white'
+                  : 'bg-primary-600 text-white hover:bg-primary-700 hover:shadow-lg transform hover:scale-105'
             }`}
           >
-            <ShoppingBag size={18} />
-            {isProcessingPayment ? 'İşleniyor...' : (product.inStock ? 'Hemen Satın Al' : 'Stokta Yok')}
+            {isProcessingPayment ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                Ödeme sayfasına yönlendiriliyor...
+              </>
+            ) : (
+              <>
+                <ShoppingBag size={18} />
+                {product.inStock ? '💳 Hemen Satın Al' : 'Stokta Yok'}
+              </>
+            )}
           </button>
 
           {product.inStock && (
             <button
               onClick={handleAddToCart}
-              className="w-full py-2 px-4 rounded-xl font-medium border-2 border-primary-600 text-primary-600 hover:bg-primary-50 transition-all duration-300 flex items-center justify-center gap-2"
+              disabled={isAddingToCart}
+              className={`w-full py-2 px-4 rounded-xl font-medium border-2 transition-all duration-500 flex items-center justify-center gap-2 ${
+                isAddingToCart
+                  ? 'border-green-500 text-green-600 bg-green-50 scale-105'
+                  : 'border-primary-600 text-primary-600 hover:bg-primary-50 hover:scale-105'
+              }`}
             >
-              <Plus size={16} />
-              Sepete Ekle
+              {isAddingToCart ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-green-600 border-t-transparent rounded-full animate-spin" />
+                  Ekleniyor...
+                </>
+              ) : (
+                <>
+                  <Plus size={16} />
+                  Sepete Ekle
+                </>
+              )}
             </button>
           )}
         </div>

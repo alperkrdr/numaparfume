@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Sparkles, Bot } from 'lucide-react';
+import { Sparkles, Bot, X, Gift, Tag } from 'lucide-react';
 import { useProducts } from '../hooks/useProducts';
 import { useSettings } from '../hooks/useSettings';
 import AIRecommendationModal from './AIRecommendationModal';
@@ -9,8 +9,39 @@ interface HeroProps {}
 
 const Hero: React.FC<HeroProps> = () => {
   const [isAIModalOpen, setIsAIModalOpen] = useState(false);
+  const [isCampaignPopupOpen, setIsCampaignPopupOpen] = useState(false);
   const { settings } = useSettings();
   const navigate = useNavigate();
+
+  // Kampanya pop-up kontrolü
+  useEffect(() => {
+    if (!settings?.campaignSettings) return;
+    
+    const { isActive, title, description } = settings.campaignSettings;
+    
+    // Kampanya aktifse ve daha önce görülmemişse pop-up göster
+    if (isActive && title && description) {
+      const campaignKey = `campaign_seen_${title.replace(/\s+/g, '_')}`;
+      const hasSeenCampaign = localStorage.getItem(campaignKey);
+      
+      if (!hasSeenCampaign) {
+        // 2 saniye sonra pop-up göster
+        const timer = setTimeout(() => {
+          setIsCampaignPopupOpen(true);
+        }, 2000);
+        
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [settings]);
+
+  const handleCloseCampaignPopup = () => {
+    if (settings?.campaignSettings?.title) {
+      const campaignKey = `campaign_seen_${settings.campaignSettings.title.replace(/\s+/g, '_')}`;
+      localStorage.setItem(campaignKey, 'true');
+    }
+    setIsCampaignPopupOpen(false);
+  };
 
   const handleShowFeatured = () => {
     console.log('🎯 Öne Çıkanlar butonu tıklandı');
@@ -115,6 +146,79 @@ const Hero: React.FC<HeroProps> = () => {
         isOpen={isAIModalOpen}
         onClose={() => setIsAIModalOpen(false)}
       />
+
+      {/* Campaign Pop-up Modal */}
+      {isCampaignPopupOpen && settings?.campaignSettings && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[9999] animate-fade-in">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 relative overflow-hidden">
+            {/* Background Pattern */}
+            <div className="absolute inset-0 bg-gradient-to-br from-primary-50 to-pink-50 opacity-30"></div>
+            
+            {/* Close Button */}
+            <button
+              onClick={handleCloseCampaignPopup}
+              className="absolute top-4 right-4 z-10 w-8 h-8 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white transition-colors"
+            >
+              <X size={16} className="text-gray-600" />
+            </button>
+
+            {/* Content */}
+            <div className="relative p-8 text-center">
+              {/* Icon */}
+              <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Gift size={32} className="text-white" />
+              </div>
+
+              {/* Title */}
+              <h3 className="text-2xl font-serif font-bold text-charcoal-900 mb-4">
+                🎉 {settings.campaignSettings.title}
+              </h3>
+
+              {/* Description */}
+              <p className="text-gray-600 leading-relaxed mb-6">
+                {settings.campaignSettings.description}
+              </p>
+
+              {/* Campaign Details */}
+              <div className="bg-white/60 backdrop-blur-sm rounded-lg p-4 mb-6">
+                <div className="flex items-center justify-center gap-2 text-primary-600">
+                  <Tag size={18} />
+                  <span className="font-semibold">
+                    {settings.campaignSettings.discountType === 'percentage' 
+                      ? `%${settings.campaignSettings.discountValue} İndirim`
+                      : `${settings.campaignSettings.discountValue}₺ İndirim`
+                    }
+                  </span>
+                </div>
+                {settings.campaignSettings.minAmount && (
+                  <p className="text-sm text-gray-500 mt-2">
+                    {settings.campaignSettings.minAmount}₺ ve üzeri alışverişlerde geçerli
+                  </p>
+                )}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  onClick={() => {
+                    handleCloseCampaignPopup();
+                    navigate('/');
+                  }}
+                  className="flex-1 bg-gradient-to-r from-primary-600 to-pink-600 text-white px-6 py-3 rounded-lg font-medium hover:from-primary-700 hover:to-pink-700 transition-colors"
+                >
+                  Alışverişe Başla
+                </button>
+                <button
+                  onClick={handleCloseCampaignPopup}
+                  className="flex-1 bg-gray-100 text-gray-700 px-6 py-3 rounded-lg font-medium hover:bg-gray-200 transition-colors"
+                >
+                  Daha Sonra
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };

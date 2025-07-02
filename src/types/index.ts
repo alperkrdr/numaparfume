@@ -13,6 +13,7 @@ export interface Product {
   size: string;
   inStock: boolean;
   featured: boolean;
+  collection?: boolean; // Koleksiyonu Keşfet kısmında gösterilecek mi?
   shopierLink: string;
   notes?: {
     top?: string[];

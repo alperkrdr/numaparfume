@@ -14,13 +14,18 @@ const searchImageOnPexels = async (query: string): Promise<string> => {
     'https://images.unsplash.com/photo-1594035910387-fea47794261f?w=800&q=80', // Fragrance
     'https://images.unsplash.com/photo-1585830243347-1f5df5b96c6c?w=800&q=80', // Perfume collection
     'https://images.unsplash.com/photo-1592173705862-2ac2e60c2a2c?w=800&q=80', // Vintage perfume
+    'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=800&q=80', // Beauty products
+    'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800&q=80', // Cosmetic bottles
+    'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800&q=80', // Luxury perfume
+    'https://images.unsplash.com/photo-1571945166097-5f777c4cd9e6?w=800&q=80', // Scent bottles
+    'https://images.unsplash.com/photo-1556227834-09f1de7a7d14?w=800&q=80', // Perfume and flowers
   ];
   
-  // Başlığa göre deterministik olarak görsel seç
-  const imageIndex = Math.abs(query.split('').reduce((a, b) => a + b.charCodeAt(0), 0)) % perfumeImages.length;
-  const selectedImage = perfumeImages[imageIndex];
+  // Her seferinde farklı bir görsel seç (truly random)
+  const randomIndex = Math.floor(Math.random() * perfumeImages.length);
+  const selectedImage = perfumeImages[randomIndex];
   
-  console.log('🖼️ Parfüm görseli seçildi:', selectedImage);
+  console.log(`🖼️ Random parfüm görseli seçildi (${randomIndex + 1}/${perfumeImages.length}):`, selectedImage);
   return selectedImage;
 };
 

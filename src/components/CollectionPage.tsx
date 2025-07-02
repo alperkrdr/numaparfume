@@ -6,9 +6,9 @@ import { useProducts } from '../hooks/useProducts';
 
 const CollectionPage: React.FC = () => {
   const navigate = useNavigate();
-  const { getFeaturedProducts, loading } = useProducts();
+  const { getCollectionProducts, loading } = useProducts();
   
-  const collectionProducts = getFeaturedProducts();
+  const collectionProducts = getCollectionProducts();
 
   return (
     <div className="min-h-screen bg-gray-50">

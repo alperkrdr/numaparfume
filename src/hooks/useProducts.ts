@@ -106,6 +106,11 @@ export const useProducts = () => {
     return products.filter(product => product.featured);
   }, [products]);
 
+  // Memoized koleksiyon ürünleri
+  const getCollectionProducts = useCallback(() => {
+    return products.filter(product => product.collection);
+  }, [products]);
+
   // Memoized arama fonksiyonu
   const searchProducts = useCallback((query: string) => {
     const normalizedQuery = query.toLowerCase().trim();
@@ -211,6 +216,7 @@ export const useProducts = () => {
     categoryStats,
     getProductsByCategory,
     getFeaturedProducts,
+    getCollectionProducts,
     searchProducts,
     addProduct,
     updateProduct,

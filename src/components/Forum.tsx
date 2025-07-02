@@ -127,12 +127,12 @@ const Forum: React.FC = () => {
           />
           
           <div className="mt-12 text-center">
-            <Link
-              to="/forum"
+            <button
+              onClick={() => setSelectedPost(null)}
               className="inline-block bg-blue-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors"
             >
               Tüm Makalelere Geri Dön
-            </Link>
+            </button>
           </div>
         </div>
       </div>

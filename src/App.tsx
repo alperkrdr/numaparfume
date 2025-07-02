@@ -37,12 +37,23 @@ function App() {
   }, []);
 
   React.useEffect(() => {
+    console.log('🔄 Filtreleme useEffect çalıştı:', { 
+      currentView, 
+      selectedCategory, 
+      productsLength: products.length 
+    });
+    
     if (currentView === 'featured' || currentView === 'collection') {
-      setFilteredProducts(getFeaturedProducts());
+      const featured = getFeaturedProducts();
+      console.log('⭐ Featured ürünler:', featured.length);
+      setFilteredProducts(featured);
     } else if (selectedCategory === 'all') {
+      console.log('🎯 Tüm ürünler gösteriliyor:', products.length);
       setFilteredProducts(products);
     } else {
-      setFilteredProducts(getProductsByCategory(selectedCategory));
+      const categoryProducts = getProductsByCategory(selectedCategory);
+      console.log('📂 Kategori ürünleri:', selectedCategory, categoryProducts.length);
+      setFilteredProducts(categoryProducts);
     }
   }, [products, selectedCategory, currentView, getProductsByCategory, getFeaturedProducts]);
 
@@ -63,8 +74,10 @@ function App() {
   };
 
   const handleCategorySelect = (category: string) => {
+    console.log('🎯 Kategori seçildi:', category);
     setSelectedCategory(category);
     setCurrentView('all');
+    console.log('🔄 State güncellendi:', { selectedCategory: category, currentView: 'all' });
   };
 
 
@@ -78,7 +91,7 @@ function App() {
   };
 
   return (
-    <Router>
+    <Router future={{ v7_relativeSplatPath: true }}>
       <div className="min-h-screen bg-white">
         <Routes>
           <Route path="/admin" element={

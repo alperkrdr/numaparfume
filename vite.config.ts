@@ -25,6 +25,17 @@ export default defineConfig({
       'localhost',
       '.trycloudflare.com', // Allow all cloudflare tunnel subdomains
       'hostels-answered-lou-actions.trycloudflare.com' // Specific tunnel domain
-    ]
+    ],
+    proxy: {
+      '/api/shopier': {
+        target: 'https://api.shopier.com/v1',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/shopier/, ''),
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        }
+      }
+    }
   }
 });

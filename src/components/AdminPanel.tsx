@@ -13,6 +13,7 @@ import { useForum } from '../hooks/useForum';
 import { onAuthStateChanged, signOut, User as FirebaseUser } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 import type { Product, SiteSettings, User, ForumPost } from '../types';
+import { ImageUtils } from '../utils/imageUtils';
 
 export const AdminPanel: React.FC = () => {
   const navigate = useNavigate();
@@ -66,6 +67,7 @@ export const AdminPanel: React.FC = () => {
     size: '50ml',
     inStock: true,
     featured: false,
+    collection: false,
     shopierLink: '',
     seoKeywords: []
   });
@@ -460,21 +462,48 @@ export const AdminPanel: React.FC = () => {
     }
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, isProduct = false) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, isProduct = false) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const imageUrl = event.target?.result as string;
-        if (isProduct) {
-          if (editingProduct) {
-            setEditingProduct({ ...editingProduct, image: imageUrl });
-          } else {
-            setNewProduct({ ...newProduct, image: imageUrl });
-          }
+    if (!file) return;
+
+    try {
+      // File validasyonu
+      const validation = ImageUtils.validateImageFile(file);
+      if (!validation.isValid) {
+        alert(validation.error);
+        return;
+      }
+
+      console.log(`📁 Orijinal dosya: ${file.name} (${ImageUtils.getBase64SizeKB(await ImageUtils.fileToBase64(file))}KB)`);
+
+      // Image'i compress et
+      const compressedBase64 = await ImageUtils.fileToCompressedBase64(file, {
+        maxWidth: 800,
+        maxHeight: 600,
+        quality: 0.8,
+        maxSizeKB: 900 // Firestore limitinin altında
+      });
+
+      const finalSizeKB = ImageUtils.getBase64SizeKB(compressedBase64);
+      console.log(`🗜️ Compress edilmiş: ${finalSizeKB}KB`);
+
+      if (finalSizeKB > 1000) {
+        alert('Dosya çok büyük. Lütfen daha küçük bir görsel seçin.');
+        return;
+      }
+
+      if (isProduct) {
+        if (editingProduct) {
+          setEditingProduct({ ...editingProduct, image: compressedBase64 });
+        } else {
+          setNewProduct({ ...newProduct, image: compressedBase64 });
         }
-      };
-      reader.readAsDataURL(file);
+      }
+
+      console.log('✅ Görsel başarıyla yüklendi ve compress edildi');
+    } catch (error) {
+      console.error('❌ Image upload hatası:', error);
+      alert('Görsel yüklenirken bir hata oluştu. Lütfen tekrar deneyin.');
     }
   };
 
@@ -951,6 +980,15 @@ export const AdminPanel: React.FC = () => {
                           />
                           Öne Çıkan
                         </label>
+                        <label className="flex items-center">
+                          <input
+                            type="checkbox"
+                            checked={newProduct.collection || false}
+                            onChange={(e) => setNewProduct({ ...newProduct, collection: e.target.checked })}
+                            className="mr-2"
+                          />
+                          Koleksiyonu Keşfet
+                        </label>
                       </div>
                     </div>
                     <div className="flex gap-2 mt-4">
@@ -994,6 +1032,7 @@ export const AdminPanel: React.FC = () => {
                               <div className="flex gap-2 mt-1">
                                 {product.inStock && <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Stokta</span>}
                                 {product.featured && <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Öne Çıkan</span>}
+                                {product.collection && <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">Koleksiyon</span>}
                               </div>
                             </div>
                           </div>
@@ -1660,6 +1699,15 @@ export const AdminPanel: React.FC = () => {
                       className="mr-2"
                     />
                     Öne Çıkan
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={editingProduct.collection || false}
+                      onChange={(e) => setEditingProduct({ ...editingProduct, collection: e.target.checked })}
+                      className="mr-2"
+                    />
+                    Koleksiyonu Keşfet
                   </label>
                 </div>
               </div>

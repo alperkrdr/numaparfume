@@ -81,16 +81,18 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onCategorySelect }) => {
           {/* Top Bar */}
           <div className="flex items-center justify-between py-4">
             {/* Logo */}
-            <Link to="/" className="flex items-center">
-              <img 
-                src={logoImage} 
-                alt={settings.siteName} 
-                className="h-12 w-12 rounded-full object-cover shadow-md"
-                onError={(e) => {
-                  e.currentTarget.src = '/cb41ce71-b8c6-4741-91ba-5a88fca6de7b.jpeg';
-                }}
-              />
-              <span className="ml-3 text-xl font-serif font-bold text-charcoal-900">{settings.siteName}</span>
+            <Link to="/" className="flex items-center group">
+              <div className="relative">
+                <img 
+                  src={logoImage} 
+                  alt={settings.siteName} 
+                  className="h-10 w-10 rounded-lg object-cover shadow-sm group-hover:shadow-md transition-shadow"
+                  onError={(e) => {
+                    e.currentTarget.src = '/cb41ce71-b8c6-4741-91ba-5a88fca6de7b.jpeg';
+                  }}
+                />
+              </div>
+              <span className="ml-3 text-xl font-serif font-bold text-charcoal-900 group-hover:text-primary-600 transition-colors">{settings.siteName}</span>
             </Link>
 
             {/* Search Bar - Desktop */}
@@ -102,14 +104,12 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onCategorySelect }) => {
                     placeholder="Parfüm ara..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-4 pr-12 py-3 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full pl-4 pr-10 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-gray-50 hover:bg-white transition-colors text-sm"
                   />
-                  <button
-                    type="submit"
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-primary-600 transition-colors"
-                  >
-                    <Search size={20} />
-                  </button>
+                  <Search 
+                    size={18} 
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"
+                  />
                 </div>
               </form>
             </div>
@@ -118,37 +118,42 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onCategorySelect }) => {
             <div className="flex items-center space-x-4">
               <Link 
                 to="/forum"
-                className="hidden md:flex items-center space-x-2 text-gray-700 hover:text-primary-600 transition-colors"
+                className="hidden md:flex items-center space-x-2 px-3 py-2 text-gray-700 hover:text-primary-600 hover:bg-gray-100 rounded-lg transition-colors"
               >
-                <MessageSquare size={20} />
-                <span className="text-sm">Forum</span>
+                <MessageSquare size={18} />
+                <span className="text-sm font-medium">Forum</span>
               </Link>
               
               <button 
                 onClick={handleUserAction}
-                className="hidden md:flex items-center space-x-2 text-gray-700 hover:text-primary-600 transition-colors"
+                className="hidden md:flex items-center space-x-2 px-3 py-2 text-gray-700 hover:text-primary-600 hover:bg-gray-100 rounded-lg transition-colors"
               >
-                {user ? <LogOut size={20} /> : <User size={20} />}
-                <span className="text-sm">
+                {user ? <LogOut size={18} /> : <User size={18} />}
+                <span className="text-sm font-medium">
                   {user ? user.name.split(' ')[0] : 'Giriş'}
                 </span>
               </button>
               
               <button 
                 onClick={openCart}
-                className={`relative text-gray-700 hover:text-primary-600 transition-all duration-300 ${
-                  isUpdating ? 'scale-110' : ''
+                className={`relative p-2 text-gray-700 hover:text-primary-600 hover:bg-gray-100 rounded-lg transition-all duration-500 ${
+                  isUpdating ? 'scale-110 text-green-600' : ''
                 }`}
+                title="Sepetimi Görüntüle"
               >
-                <ShoppingBag size={20} className={isUpdating ? 'animate-pulse' : ''} />
+                <ShoppingBag size={20} className={`transition-all duration-500 ${isUpdating ? 'animate-bounce text-green-600' : ''}`} />
                 {getCartItemCount() > 0 && (
-                  <span className={`absolute -top-2 -right-2 bg-primary-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center transition-all duration-300 ${
-                    isUpdating ? 'scale-125 bg-green-500' : ''
+                  <span className={`absolute -top-1 -right-1 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center transition-all duration-500 min-w-[20px] ${
+                    isUpdating 
+                      ? 'scale-125 bg-green-500 animate-pulse shadow-lg' 
+                      : 'bg-primary-600 scale-100'
                   }`}>
                     {getCartItemCount()}
                   </span>
                 )}
               </button>
+
+
               
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -200,14 +205,12 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onCategorySelect }) => {
                     placeholder="Parfüm ara..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-4 pr-12 py-3 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full pl-4 pr-10 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-gray-50 hover:bg-white transition-colors text-sm"
                   />
-                  <button
-                    type="submit"
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-primary-600 transition-colors"
-                  >
-                    <Search size={20} />
-                  </button>
+                  <Search 
+                    size={18} 
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"
+                  />
                 </div>
               </form>
 
