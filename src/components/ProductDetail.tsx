@@ -20,6 +20,16 @@ const ProductDetail: React.FC = () => {
   const [quantity, setQuantity] = useState(1);
   const [isLiked, setIsLiked] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [pendingPurchase, setPendingPurchase] = useState(false);
+
+  // User state değişimini dinle ve pending purchase'ı kontrol et
+  useEffect(() => {
+    if (user && pendingPurchase) {
+      console.log('✅ ProductDetail: Kullanıcı giriş yaptı, bekleyen satın alma başlatılıyor...');
+      setPendingPurchase(false);
+      processPurchase();
+    }
+  }, [user, pendingPurchase]);
 
   useEffect(() => {
     if (id && products.length > 0) {
@@ -65,9 +75,9 @@ const ProductDetail: React.FC = () => {
     }
   };
 
-  const handleDirectPurchase = async () => {
-    if (!user) {
-      openLoginModal();
+  const processPurchase = async () => {
+    if (!user || !product) {
+      console.error('❌ processPurchase: User veya product null!');
       return;
     }
 
@@ -92,13 +102,26 @@ const ProductDetail: React.FC = () => {
         }
       );
       
-      window.open(paymentUrl, '_blank');
+      window.location.href = paymentUrl;
     } catch (error) {
       console.error('Direkt satın alma hatası:', error);
       alert('Ödeme işlemi başlatılamadı. Lütfen tekrar deneyin.');
     } finally {
       setIsProcessingPayment(false);
     }
+  };
+
+  const handleDirectPurchase = async () => {
+    console.log('🛒 ProductDetail: Hemen Satın Al butonu tıklandı', { user, product });
+    
+    if (!user) {
+      console.log('❌ ProductDetail: Kullanıcı giriş yapmamış, login modal açılıyor');
+      setPendingPurchase(true);
+      openLoginModal();
+      return;
+    }
+
+    await processPurchase();
   };
 
   const nextImage = () => {

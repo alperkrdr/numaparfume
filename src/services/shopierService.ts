@@ -33,18 +33,25 @@ interface ShopierFormData {
   modul_version: string;
   random_nr: string;
   signature: string;
+  callback_url?: string;
+  return_url?: string;
 }
 
 import * as CryptoJS from 'crypto-js';
 
 export class ShopierService {
   // Gerçek Shopier API bilgileri
-  private static readonly API_KEY = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiI3NmNkNDQ3NTZiYmI5MTFhOTMzOTY0ZWUyYWMyYmUyZiIsImp0aSI6IjlhZjY0ZjhjOWY5NGYzMTRmNjliM2FiOTZjMTFkMDFkNDI0ZGE2ZTY3NTQxMzQ5M2VjYmY4YjAwMjkxMTYzNjI2OGVkNjEzNjM0YzEzODk5MGRmZDY3ZWJiNWNhMTRiZDUzZmQ1NWE1MjJmNjg1MWY0YzU1NzhiZWZhMDIxODIwMzhjZTE1Y2U4M2IzZmZhYmZkNmU2YWRlMGViYmE5MDIiLCJpYXQiOjE3NTEyNDA0MDMsIm5iZiI6MTc1MTI0MDQwMywiZXhwIjoxOTA5MDI1MTYzLCJzdWIiOiIyMDEwNjg2Iiwic2NvcGVzIjpbIm9yZGVyczpyZWFkIiwib3JkZXJzOndyaXRlIiwicHJvZHVjdHM6cmVhZCIsInByb2R1Y3RzOndyaXRlIiwic2hpcHBpbmdzOnJlYWQiLCJzaGlwcGluZ3M6d3JpdGUiLCJkaXNjb3VudHM6cmVhZCIsImRpc2NvdW50czp3cml0ZSIsInBheW91dHM6cmVhZCIsInJlZnVuZHM6cmVhZCIsInJlZnVuZHM6d3JpdGUiLCJzaG9wOnJlYWQiLCJzaG9wOndyaXRlIl19.m6odt8Ov9DJzgcx1wZp5lqoGqAB6Lf-ydOk5DvVR6gkZ8HutyyLZQnhuvmvL-q1B1ZulWqEWBCIwTNf3tnqprX5r-ovP_jFnd3eavah96FmLhLZ9q854iNRGsCsnxFi6Jiv_u7cpkwtpbndrtXIdhlyNGk8iubtn5AWYtX0_SqmjVVKUR1W9wSujUzX0C8IEUjv9EPCfE31gUGmrnBJtzAQIKzcl0_O-6MI3zRH0yup6JtOxz0GUFvAEcsfSZaYqN0F0l9ppQLfiQsnUuKW2FZ9MKHOcTOJ4BCqcOSgpX_U7a4RJMvrb3tRfumDxsrlmiGuRHBioqAftfKllN6VOBg';
-  private static readonly API_SECRET = 'secret'; // Geçici olarak, gerçek secret key gerekebilir
+  private static readonly API_KEY = '107a7821174596da16176ffe2138b709';
+  private static readonly API_SECRET = '952d2f8f485d0d74391343c1606aa4cb';
   private static readonly SHOPIER_URL = 'https://www.shopier.com/ShowProduct/api_pay4.php';
+  private static readonly WEBSITE_INDEX = 1;
+  private static readonly SITE_URL = typeof window !== 'undefined' && window.location.hostname === 'localhost' 
+    ? `${window.location.protocol}//${window.location.host}`
+    : 'https://numaparfume.com';
   
-  // Gerçek Shopier entegrasyonu aktif
+  // Gerçek test ortamı için MOCK_MODE kapalı
   private static readonly MOCK_MODE = false;
+  private static readonly DEBUG_MODE = true;
 
   // Tek ürün için ödeme formu oluştur
   static async createSingleProductPayment(
@@ -56,6 +63,9 @@ export class ShopierService {
     }
   ): Promise<string> {
     try {
+      console.log('🔍 MOCK_MODE kontrol:', this.MOCK_MODE);
+      console.log('🔍 Gerçek Shopier entegrasyonu aktif!');
+      
       if (this.MOCK_MODE) {
         console.log('💳 Shopier Ödeme İşlemi Başlatılıyor...');
         console.log('📦 Ürün:', product.name, '- Fiyat:', product.price, 'TL');
@@ -81,13 +91,23 @@ export class ShopierService {
       }
 
       // Gerçek Shopier form verileri
+      console.log('🚀 GERÇEK SHOPIER ENTEGRASYONU BAŞLIYOR!');
       const randomNr = Math.floor(Math.random() * 1000000).toString();
       const orderId = `ORDER_${Date.now()}`;
       
+      if (this.DEBUG_MODE) {
+        console.log('🔧 Shopier Debug - API Bilgileri:');
+        console.log('API_KEY:', this.API_KEY);
+        console.log('API_SECRET:', this.API_SECRET.substring(0, 8) + '...');
+        console.log('WEBSITE_INDEX:', this.WEBSITE_INDEX);
+        console.log('Order ID:', orderId);
+        console.log('Random Nr:', randomNr);
+      }
+
       // Shopier form verilerini hazırla
       const formData: ShopierFormData = {
         API_key: this.API_KEY,
-        website_index: 1,
+        website_index: this.WEBSITE_INDEX,
         platform_order_id: orderId,
         product_name: product.name,
         product_type: 1, // 1: Fiziksel ürün
@@ -109,12 +129,39 @@ export class ShopierService {
         shipping_postcode: '34000',
         modul_version: 'NUMAPERFUME_1.0',
         random_nr: randomNr,
-        signature: this.generateSignature(randomNr, orderId, product.price.toString(), 'TRY')
+        signature: this.generateSignature(randomNr, orderId, product.price.toString(), 'TRY'),
+        // Return URL'leri
+        callback_url: `${this.SITE_URL}/payment-callback`,
+        return_url: `${this.SITE_URL}/payment-callback`
       };
+
+      if (this.DEBUG_MODE) {
+        console.log('📋 Shopier Form Data:');
+        console.log('Product Name:', formData.product_name);
+        console.log('Total Order Value:', formData.total_order_value);
+        console.log('Buyer Name:', formData.buyer_name, formData.buyer_surname);
+        console.log('Buyer Email:', formData.buyer_email);
+        console.log('Signature:', formData.signature);
+        console.log('Callback URL:', formData.callback_url);
+      }
 
       // HTML form oluştur ve submit et
       const form = this.createPaymentForm(formData);
       document.body.appendChild(form);
+      
+      if (this.DEBUG_MODE) {
+        console.log('🚀 Form oluşturuldu ve submit ediliyor...');
+        console.log('Form action:', form.action);
+        console.log('Form method:', form.method);
+        console.log('Form elements count:', form.elements.length);
+        
+        // Form elementlerini listele
+        for (let i = 0; i < form.elements.length; i++) {
+          const element = form.elements[i] as HTMLInputElement;
+          console.log(`Form field [${element.name}]:`, element.value);
+        }
+      }
+      
       form.submit();
 
       return this.SHOPIER_URL;
@@ -141,6 +188,9 @@ export class ShopierService {
     }
   ): Promise<string> {
     try {
+      console.log('🔍 Cart MOCK_MODE kontrol:', this.MOCK_MODE);
+      console.log('🔍 Gerçek Shopier sepet entegrasyonu aktif!');
+      
       if (this.MOCK_MODE) {
         console.log('🛒 Sepet Ödeme İşlemi Başlatılıyor...');
         console.log('📦 Sepet:', cartItems.length, 'ürün');
@@ -182,7 +232,7 @@ export class ShopierService {
       
       const formData: ShopierFormData = {
         API_key: this.API_KEY,
-        website_index: 1,
+        website_index: this.WEBSITE_INDEX,
         platform_order_id: orderId,
         product_name: productNames,
         product_type: 1,
@@ -204,7 +254,10 @@ export class ShopierService {
         shipping_postcode: '34000',
         modul_version: 'NUMAPERFUME_1.0',
         random_nr: randomNr,
-        signature: this.generateSignature(randomNr, orderId, finalAmount.toString(), 'TRY')
+        signature: this.generateSignature(randomNr, orderId, finalAmount.toString(), 'TRY'),
+        // Return URL'leri
+        callback_url: `${this.SITE_URL}/payment-callback`,
+        return_url: `${this.SITE_URL}/payment-callback`
       };
 
       const form = this.createPaymentForm(formData);
@@ -221,8 +274,25 @@ export class ShopierService {
   // HMAC-SHA256 imza oluştur (Shopier formatına uygun)
   private static generateSignature(randomNr: string, orderId: string, totalValue: string, currency: string): string {
     const data = randomNr + orderId + totalValue + currency;
+    
+    if (this.DEBUG_MODE) {
+      console.log('🔐 Signature Generation Debug:');
+      console.log('Random Nr:', randomNr);
+      console.log('Order ID:', orderId);
+      console.log('Total Value:', totalValue);
+      console.log('Currency:', currency);
+      console.log('Concatenated Data:', data);
+      console.log('API Secret (first 8 chars):', this.API_SECRET.substring(0, 8) + '...');
+    }
+    
     const signature = CryptoJS.HmacSHA256(data, this.API_SECRET);
-    return CryptoJS.enc.Base64.stringify(signature);
+    const base64Signature = CryptoJS.enc.Base64.stringify(signature);
+    
+    if (this.DEBUG_MODE) {
+      console.log('Generated Signature:', base64Signature);
+    }
+    
+    return base64Signature;
   }
 
   // HTML form oluştur

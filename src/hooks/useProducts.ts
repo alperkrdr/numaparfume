@@ -74,7 +74,7 @@ export const useProducts = () => {
         const firebaseProducts = await ProductService.getAllProducts();
         
         if (firebaseProducts.length > 0) {
-          setProducts(firebaseProducts);
+        setProducts(firebaseProducts);
           saveToCache(firebaseProducts);
           console.log(`✅ ${firebaseProducts.length} ürün yüklendi`);
         } else {
@@ -190,7 +190,7 @@ export const useProducts = () => {
       const firebaseProducts = await ProductService.getAllProducts();
       
       if (firebaseProducts.length > 0) {
-        setProducts(firebaseProducts);
+      setProducts(firebaseProducts);
         saveToCache(firebaseProducts);
         console.log(`✅ ${firebaseProducts.length} ürün yenilendi`);
       } else {

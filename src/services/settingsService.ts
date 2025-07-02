@@ -71,8 +71,11 @@ export class SettingsService {
       return { settings: { id: SETTINGS_DOC_ID, ...DEFAULT_SETTINGS }, fromCache: true };
       
     } catch (error) {
-      console.error('Error fetching site settings:', error);
-      console.warn('Using default settings due to Firebase connection error');
+      // Firebase hatası sessizce handle et (development modunda sadece bir kez log)
+      if (process.env.NODE_ENV === 'development' && !(window as any).__firebaseErrorLogged) {
+        console.warn('🔥 Firebase bağlantı hatası - default ayarlar kullanılıyor');
+        (window as any).__firebaseErrorLogged = true;
+      }
       return { settings: { id: SETTINGS_DOC_ID, ...DEFAULT_SETTINGS }, fromCache: true };
     }
   }

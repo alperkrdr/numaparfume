@@ -15,6 +15,9 @@ const CategoryPage = lazy(() => import('./components/CategoryPage'));
 const FeaturedPage = lazy(() => import('./components/FeaturedPage'));
 const Forum = lazy(() => import('./components/Forum'));
 const AdminPanel = lazy(() => import('./components/AdminPanel').then(module => ({ default: module.AdminPanel })));
+const PaymentCallback = lazy(() => import('./components/PaymentCallback'));
+const PaymentSuccess = lazy(() => import('./components/PaymentSuccess'));
+const PaymentFailed = lazy(() => import('./components/PaymentFailed'));
 
 // Loading spinner component
 const LoadingSpinner = () => (
@@ -146,38 +149,23 @@ function App() {
             </Suspense>
           } />
           
+          {/* Payment Callback */}
+          <Route path="/payment-callback" element={
+            <Suspense fallback={<LoadingSpinner />}>
+              <PaymentCallback />
+            </Suspense>
+          } />
+          
           {/* Payment Pages */}
           <Route path="/payment-success" element={
-            <div className="min-h-screen flex items-center justify-center bg-green-50">
-              <div className="text-center">
-                <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-                <h1 className="text-2xl font-bold text-green-800 mb-2">Ödeme Başarılı!</h1>
-                <p className="text-green-600 mb-4">Siparişiniz başarıyla alındı.</p>
-                <a href="/" className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700">
-                  Ana Sayfaya Dön
-                </a>
-              </div>
-            </div>
+            <Suspense fallback={<LoadingSpinner />}>
+              <PaymentSuccess />
+            </Suspense>
           } />
           <Route path="/payment-failed" element={
-            <div className="min-h-screen flex items-center justify-center bg-red-50">
-              <div className="text-center">
-                <div className="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </div>
-                <h1 className="text-2xl font-bold text-red-800 mb-2">Ödeme Başarısız</h1>
-                <p className="text-red-600 mb-4">Ödeme işlemi tamamlanamadı.</p>
-                <a href="/" className="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700">
-                  Ana Sayfaya Dön
-                </a>
-              </div>
-            </div>
+            <Suspense fallback={<LoadingSpinner />}>
+              <PaymentFailed />
+            </Suspense>
           } />
           
           {/* Home Page */}

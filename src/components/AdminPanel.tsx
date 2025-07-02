@@ -539,13 +539,13 @@ export const AdminPanel: React.FC = () => {
         return;
       }
 
-      if (isProduct) {
-        if (editingProduct) {
+        if (isProduct) {
+          if (editingProduct) {
           setEditingProduct({ ...editingProduct, image: compressedBase64 });
-        } else {
+          } else {
           setNewProduct({ ...newProduct, image: compressedBase64 });
+          }
         }
-      }
 
       console.log('✅ Görsel başarıyla yüklendi ve compress edildi');
     } catch (error) {

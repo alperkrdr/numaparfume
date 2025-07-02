@@ -14,20 +14,29 @@ interface ProductCardProps {
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const [isLiked, setIsLiked] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [pendingPurchase, setPendingPurchase] = useState(false);
   const { user, openLoginModal } = useAuth();
   const { addToCart } = useCart();
   const navigate = useNavigate();
+
+  // Pending purchase kontrol et (kullanıcı giriş yaptığında)
+  React.useEffect(() => {
+    // Eğer kullanıcı giriş yaptı ve bekleyen bir satın alma varsa
+    if (user && pendingPurchase) {
+      console.log('✅ Kullanıcı giriş yaptı, bekleyen satın alma başlatılıyor...');
+      setPendingPurchase(false);
+      processPurchase();
+    }
+  }, [user, pendingPurchase]);
 
   const handleProductClick = () => {
     navigate(`/product/${product.id}`);
   };
 
-  const handleDirectPurchase = async () => {
-    console.log('🛒 Hemen Satın Al butonu tıklandı', { user, product });
-    
+  // Satın alma işlemini gerçekleştir
+  const processPurchase = async () => {
     if (!user) {
-      console.log('❌ Kullanıcı giriş yapmamış, login modal açılıyor');
-      openLoginModal();
+      console.error('❌ processPurchase: User null!');
       return;
     }
 
@@ -71,6 +80,21 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     } finally {
       setIsProcessingPayment(false);
     }
+  };
+
+  const handleDirectPurchase = async () => {
+    console.log('🛒 Hemen Satın Al butonu tıklandı', { user, product });
+    
+    if (!user) {
+      console.log('❌ Kullanıcı giriş yapmamış, login modal açılıyor');
+      setPendingPurchase(true); // Bekleyen satın alma flag'i
+      openLoginModal();
+      console.log('🔄 Login modal açıldı, kullanıcı giriş yapması bekleniyor...');
+      return;
+    }
+
+    // Kullanıcı varsa direkt satın almayı başlat
+    await processPurchase();
   };
 
   const [isAddingToCart, setIsAddingToCart] = useState(false);
@@ -184,7 +208,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           {isAddingToCart ? (
             <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
           ) : (
-            <Plus size={18} />
+          <Plus size={18} />
           )}
         </button>
       </div>
@@ -265,7 +289,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               </>
             ) : (
               <>
-                <ShoppingBag size={18} />
+            <ShoppingBag size={18} />
                 {product.inStock ? '💳 Hemen Satın Al' : 'Stokta Yok'}
               </>
             )}
@@ -288,8 +312,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                 </>
               ) : (
                 <>
-                  <Plus size={16} />
-                  Sepete Ekle
+              <Plus size={16} />
+              Sepete Ekle
                 </>
               )}
             </button>

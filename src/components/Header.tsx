@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Menu, X, ShoppingBag, User, MessageSquare, LogOut } from 'lucide-react';
 import { useSettings } from '../hooks/useSettings';
 import { useAuth } from '../hooks/useAuth';
@@ -24,6 +24,14 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onCategorySelect }) => {
     openLoginModal, 
     closeLoginModal 
   } = useAuth();
+
+  // Debug sadece modal açılırken
+  React.useEffect(() => {
+    if (isLoginModalOpen) {
+      console.log('🔓 Header: Login modal açıldı');
+    }
+  }, [isLoginModalOpen]);
+  
   const {
     cartItems,
     isCartOpen,
@@ -83,14 +91,14 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onCategorySelect }) => {
             {/* Logo */}
             <Link to="/" className="flex items-center group">
               <div className="relative">
-                <img 
-                  src={logoImage} 
-                  alt={settings.siteName} 
+              <img 
+                src={logoImage} 
+                alt={settings.siteName} 
                   className="h-10 w-10 rounded-lg object-cover shadow-sm group-hover:shadow-md transition-shadow"
-                  onError={(e) => {
-                    e.currentTarget.src = '/cb41ce71-b8c6-4741-91ba-5a88fca6de7b.jpeg';
-                  }}
-                />
+                onError={(e) => {
+                  e.currentTarget.src = '/cb41ce71-b8c6-4741-91ba-5a88fca6de7b.jpeg';
+                }}
+              />
               </div>
               <span className="ml-3 text-xl font-serif font-bold text-charcoal-900 group-hover:text-primary-600 transition-colors">{settings.siteName}</span>
             </Link>
@@ -165,18 +173,18 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onCategorySelect }) => {
           </div>
 
           {/* Navigation - Desktop */}
-          <nav className="hidden md:block border-t border-gray-100">
-            <div className="flex items-center justify-center space-x-8 py-4">
-              {categories.map((category) => (
-                <button
-                  key={category.value}
+            <nav className="hidden md:block border-t border-gray-100">
+              <div className="flex items-center justify-center space-x-8 py-4">
+                {categories.map((category) => (
+                  <button
+                    key={category.value}
                   onClick={() => handleCategoryClick(category)}
-                  className="text-gray-700 hover:text-primary-600 font-medium transition-colors relative group"
-                >
-                  {category.name}
-                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary-600 transition-all duration-300 group-hover:w-full"></span>
-                </button>
-              ))}
+                    className="text-gray-700 hover:text-primary-600 font-medium transition-colors relative group"
+                  >
+                    {category.name}
+                    <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary-600 transition-all duration-300 group-hover:w-full"></span>
+                  </button>
+                ))}
               <Link
                 to="/collection"
                 className="text-gray-700 hover:text-primary-600 font-medium transition-colors relative group"
@@ -191,8 +199,8 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onCategorySelect }) => {
                 Öne Çıkanlar
                 <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary-600 transition-all duration-300 group-hover:w-full"></span>
               </Link>
-            </div>
-          </nav>
+              </div>
+            </nav>
 
           {/* Mobile Menu */}
           {isMenuOpen && (
