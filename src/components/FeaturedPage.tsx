@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Star } from 'lucide-react';
 import ProductCard from './ProductCard';
 import { useProducts } from '../hooks/useProducts';
+import SEO from './SEO';
 
 const FeaturedPage: React.FC = () => {
   const navigate = useNavigate();
@@ -11,7 +12,15 @@ const FeaturedPage: React.FC = () => {
   const featuredProducts = getFeaturedProducts();
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <>
+      <SEO
+        title="Öne Çıkan Parfümler | Numa Parfume"
+        description="En popüler ve beğenilen parfümlerimiz. Müşterilerimizin en çok tercih ettiği kaliteli parfüm çeşitleri."
+        keywords="öne çıkan parfüm, popüler parfüm, beğenilen parfüm, en iyi parfüm, parfüm önerileri"
+        url="https://numaparfume.com/featured"
+        type="website"
+      />
+      <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white border-b">
         <div className="container mx-auto px-4 py-6">
@@ -77,6 +86,7 @@ const FeaturedPage: React.FC = () => {
         )}
       </div>
     </div>
+    </>
   );
 };
 

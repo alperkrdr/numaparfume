@@ -1,0 +1,50 @@
+{
+  "name": "Numa Parfume - Benzersiz Benzerlik",
+  "short_name": "Numa Parfume",
+  "description": "Premium parfüm koleksiyonu ile benzersiz benzerlik deneyimi",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#C9A876",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "tr",
+  "categories": ["shopping", "lifestyle"],
+  "icons": [
+    {
+      "src": "/cb41ce71-b8c6-4741-91ba-5a88fca6de7b.jpeg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/cb41ce71-b8c6-4741-91ba-5a88fca6de7b.jpeg",
+      "sizes": "512x512", 
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Kadın Parfümleri",
+      "short_name": "Kadın",
+      "description": "Kadın parfüm koleksiyonu",
+      "url": "/category/kadın",
+      "icons": [{"src": "/cb41ce71-b8c6-4741-91ba-5a88fca6de7b.jpeg", "sizes": "96x96"}]
+    },
+    {
+      "name": "Erkek Parfümleri", 
+      "short_name": "Erkek",
+      "description": "Erkek parfüm koleksiyonu",
+      "url": "/category/erkek",
+      "icons": [{"src": "/cb41ce71-b8c6-4741-91ba-5a88fca6de7b.jpeg", "sizes": "96x96"}]
+    },
+    {
+      "name": "Forum",
+      "short_name": "Forum", 
+      "description": "Parfüm dünyası forum",
+      "url": "/forum",
+      "icons": [{"src": "/cb41ce71-b8c6-4741-91ba-5a88fca6de7b.jpeg", "sizes": "96x96"}]
+    }
+  ]
+} 

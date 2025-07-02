@@ -135,6 +135,25 @@ export const AdminPanel: React.FC = () => {
         campaignSettings: {
           ...SettingsService.getDefaultSettings().campaignSettings,
           ...settings.campaignSettings,
+          // Tarih validasyonu ile güvenli başlatma
+          startDate: (() => {
+            try {
+              if (!settings.campaignSettings?.startDate) return undefined;
+              const date = new Date(settings.campaignSettings.startDate);
+              return isNaN(date.getTime()) ? undefined : settings.campaignSettings.startDate;
+            } catch {
+              return undefined;
+            }
+          })(),
+          endDate: (() => {
+            try {
+              if (!settings.campaignSettings?.endDate) return undefined;
+              const date = new Date(settings.campaignSettings.endDate);
+              return isNaN(date.getTime()) ? undefined : settings.campaignSettings.endDate;
+            } catch {
+              return undefined;
+            }
+          })(),
         },
       });
     }
@@ -156,7 +175,35 @@ export const AdminPanel: React.FC = () => {
       console.log("Settings fetch result:", { fromCache, settings: fetchedSettings });
       
       if (fetchedSettings) {
-        setTempSettings(fetchedSettings);
+        // Güvenli kampanya ayarları ile tempSettings güncellemesi
+        const safeCampaignSettings = {
+          ...SettingsService.getDefaultSettings().campaignSettings,
+          ...fetchedSettings.campaignSettings,
+          startDate: (() => {
+            try {
+              if (!fetchedSettings.campaignSettings?.startDate) return undefined;
+              const date = new Date(fetchedSettings.campaignSettings.startDate);
+              return isNaN(date.getTime()) ? undefined : fetchedSettings.campaignSettings.startDate;
+            } catch {
+              return undefined;
+            }
+          })(),
+          endDate: (() => {
+            try {
+              if (!fetchedSettings.campaignSettings?.endDate) return undefined;
+              const date = new Date(fetchedSettings.campaignSettings.endDate);
+              return isNaN(date.getTime()) ? undefined : fetchedSettings.campaignSettings.endDate;
+            } catch {
+              return undefined;
+            }
+          })(),
+        };
+        
+        setTempSettings({
+          ...SettingsService.getDefaultSettings(),
+          ...fetchedSettings,
+          campaignSettings: safeCampaignSettings,
+        });
       }
       
       setIsFirebaseConnected(!fromCache);
@@ -1386,15 +1433,33 @@ export const AdminPanel: React.FC = () => {
                         <label className="block text-sm font-medium text-gray-700 mb-1">Başlangıç Tarihi (opsiyonel)</label>
                         <input
                           type="datetime-local"
-                          value={tempSettings.campaignSettings?.startDate ? 
-                            new Date(tempSettings.campaignSettings.startDate).toISOString().slice(0, 16) : ''}
-                          onChange={(e) => setTempSettings({ 
-                            ...tempSettings, 
-                            campaignSettings: { 
-                              ...tempSettings.campaignSettings, 
-                              startDate: e.target.value ? new Date(e.target.value) : undefined 
+                          value={(() => {
+                            try {
+                              if (!tempSettings.campaignSettings?.startDate) return '';
+                              const date = new Date(tempSettings.campaignSettings.startDate);
+                              if (isNaN(date.getTime())) return '';
+                              return date.toISOString().slice(0, 16);
+                            } catch (error) {
+                              console.warn('Kampanya başlangıç tarihi hatası:', error);
+                              return '';
                             }
-                          })}
+                          })()}
+                          onChange={(e) => {
+                            try {
+                              setTempSettings({ 
+                                ...tempSettings, 
+                                campaignSettings: { 
+                                  ...tempSettings.campaignSettings, 
+                                  startDate: e.target.value ? (() => {
+                                    const date = new Date(e.target.value);
+                                    return isNaN(date.getTime()) ? undefined : date;
+                                  })() : undefined 
+                                }
+                              });
+                            } catch (error) {
+                              console.warn('Kampanya başlangıç tarihi ayarlanırken hata:', error);
+                            }
+                          }}
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                         />
                       </div>
@@ -1402,15 +1467,33 @@ export const AdminPanel: React.FC = () => {
                         <label className="block text-sm font-medium text-gray-700 mb-1">Bitiş Tarihi (opsiyonel)</label>
                         <input
                           type="datetime-local"
-                          value={tempSettings.campaignSettings?.endDate ? 
-                            new Date(tempSettings.campaignSettings.endDate).toISOString().slice(0, 16) : ''}
-                          onChange={(e) => setTempSettings({ 
-                            ...tempSettings, 
-                            campaignSettings: { 
-                              ...tempSettings.campaignSettings, 
-                              endDate: e.target.value ? new Date(e.target.value) : undefined 
+                          value={(() => {
+                            try {
+                              if (!tempSettings.campaignSettings?.endDate) return '';
+                              const date = new Date(tempSettings.campaignSettings.endDate);
+                              if (isNaN(date.getTime())) return '';
+                              return date.toISOString().slice(0, 16);
+                            } catch (error) {
+                              console.warn('Kampanya bitiş tarihi hatası:', error);
+                              return '';
                             }
-                          })}
+                          })()}
+                          onChange={(e) => {
+                            try {
+                              setTempSettings({ 
+                                ...tempSettings, 
+                                campaignSettings: { 
+                                  ...tempSettings.campaignSettings, 
+                                  endDate: e.target.value ? (() => {
+                                    const date = new Date(e.target.value);
+                                    return isNaN(date.getTime()) ? undefined : date;
+                                  })() : undefined 
+                                }
+                              });
+                            } catch (error) {
+                              console.warn('Kampanya bitiş tarihi ayarlanırken hata:', error);
+                            }
+                          }}
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                         />
                       </div>
@@ -1430,12 +1513,28 @@ export const AdminPanel: React.FC = () => {
                               : `₺${tempSettings.campaignSettings.discountValue} indirim`
                             }
                           </p>
-                          {tempSettings.campaignSettings.startDate && (
-                            <p><strong>Başlangıç:</strong> {new Date(tempSettings.campaignSettings.startDate).toLocaleString('tr-TR')}</p>
-                          )}
-                          {tempSettings.campaignSettings.endDate && (
-                            <p><strong>Bitiş:</strong> {new Date(tempSettings.campaignSettings.endDate).toLocaleString('tr-TR')}</p>
-                          )}
+                          {(() => {
+                            try {
+                              if (!tempSettings.campaignSettings.startDate) return null;
+                              const date = new Date(tempSettings.campaignSettings.startDate);
+                              if (isNaN(date.getTime())) return null;
+                              return <p><strong>Başlangıç:</strong> {date.toLocaleString('tr-TR')}</p>;
+                            } catch (error) {
+                              console.warn('Kampanya başlangıç tarihi önizleme hatası:', error);
+                              return null;
+                            }
+                          })()}
+                          {(() => {
+                            try {
+                              if (!tempSettings.campaignSettings.endDate) return null;
+                              const date = new Date(tempSettings.campaignSettings.endDate);
+                              if (isNaN(date.getTime())) return null;
+                              return <p><strong>Bitiş:</strong> {date.toLocaleString('tr-TR')}</p>;
+                            } catch (error) {
+                              console.warn('Kampanya bitiş tarihi önizleme hatası:', error);
+                              return null;
+                            }
+                          })()}
                         </div>
                       </div>
                     )}

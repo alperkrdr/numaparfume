@@ -6,6 +6,7 @@ import { useForum } from '../hooks/useForum';
 import { useAuth } from '../hooks/useAuth';
 import '../article-styles.css';
 import { Link } from 'react-router-dom';
+import SEO from './SEO';
 
 const Forum: React.FC = () => {
   const [posts, setPosts] = useState<ForumPost[]>([]);
@@ -100,7 +101,17 @@ const Forum: React.FC = () => {
     const formattedContent = formatContent(selectedPost.content);
 
     return (
-      <div className="bg-white">
+      <>
+        <SEO
+          title={`${selectedPost.title} | Numa Parfume Forum`}
+          description={selectedPost.excerpt}
+          keywords={`${selectedPost.tags?.join(', ') || ''}, parfüm makale, parfüm bilgisi, parfüm forum`}
+          url={`https://numaparfume.com/forum`}
+          type="article"
+          publishedTime={selectedPost.createdAt.toISOString()}
+          author={selectedPost.authorName}
+        />
+        <div className="bg-white">
         <div className="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-gray-900">
@@ -136,13 +147,22 @@ const Forum: React.FC = () => {
           </div>
         </div>
       </div>
+      </>
     );
   }
 
 
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <>
+      <SEO
+        title="Parfüm Dünyası Forum | Numa Parfume"
+        description="Parfüm dünyasının en güncel haberleri, ipuçları ve bilgileri. Parfüm seçimi, kullanımı ve bakımı hakkında uzman tavsiyeleri."
+        keywords="parfüm forum, parfüm haberleri, parfüm ipuçları, parfüm bilgisi, parfüm rehberi, parfüm makaleleri"
+        url="https://numaparfume.com/forum"
+        type="website"
+      />
+      <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
       <div className="bg-gradient-to-br from-primary-600 to-primary-800 text-white py-16">
         <div className="container mx-auto px-4 text-center">
@@ -268,6 +288,7 @@ const Forum: React.FC = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 

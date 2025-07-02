@@ -53,7 +53,7 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onCategorySelect }) => {
   };
 
   const categories = [
-    { name: 'Tümü', value: 'all', path: null },
+    { name: 'Tümü', value: 'all', path: '/' },
     { name: 'Kadın', value: 'kadın', path: '/category/kadın' },
     { name: 'Erkek', value: 'erkek', path: '/category/erkek' },
     { name: 'Unisex', value: 'unisex', path: '/category/unisex' }

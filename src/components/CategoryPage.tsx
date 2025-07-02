@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, User, UserCheck, Users } from 'lucide-react';
 import ProductCard from './ProductCard';
 import { useProducts } from '../hooks/useProducts';
+import SEO from './SEO';
 
 const CategoryPage: React.FC = () => {
   const { category } = useParams<{ category: string }>();
@@ -52,7 +53,15 @@ const CategoryPage: React.FC = () => {
   const IconComponent = categoryInfo.icon;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <>
+      <SEO
+        title={`${categoryInfo.title} | Numa Parfume`}
+        description={`${categoryInfo.description}. ${categoryProducts.length} farklı ${category} parfümü çeşidi ile benzersiz benzerlik deneyimi.`}
+        keywords={`${category} parfüm, ${category} parfümü, online parfüm satış, ${category} koku, kaliteli ${category} parfüm`}
+        url={`https://numaparfume.com/category/${category}`}
+        type="website"
+      />
+      <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white border-b">
         <div className="container mx-auto px-4 py-6">
@@ -118,6 +127,7 @@ const CategoryPage: React.FC = () => {
         )}
       </div>
     </div>
+    </>
   );
 };
 

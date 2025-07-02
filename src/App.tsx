@@ -6,6 +6,7 @@ import ProductGrid from './components/ProductGrid';
 import Footer from './components/Footer';
 import { useProducts } from './hooks/useProducts';
 import { ForumService } from './services/forumService';
+import SEO from './components/SEO';
 
 // Lazy load components for better performance
 const ProductDetail = lazy(() => import('./components/ProductDetail'));
@@ -182,6 +183,7 @@ function App() {
           {/* Home Page */}
           <Route path="/" element={
             <>
+              <SEO />
               <Header onSearch={handleSearch} onCategorySelect={handleCategorySelect} />
               <Hero />
               <main className="container mx-auto px-4 py-12">

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Package } from 'lucide-react';
 import ProductCard from './ProductCard';
 import { useProducts } from '../hooks/useProducts';
+import SEO from './SEO';
 
 const CollectionPage: React.FC = () => {
   const navigate = useNavigate();
@@ -11,7 +12,15 @@ const CollectionPage: React.FC = () => {
   const collectionProducts = getCollectionProducts();
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <>
+      <SEO
+        title="Koleksiyonumuz | Numa Parfume"
+        description="Özenle seçilmiş parfüm koleksiyonumuz. Benzersiz benzerlik felsefesi ile hazırlanmış premium parfüm çeşitleri."
+        keywords="parfüm koleksiyonu, premium parfüm, benzersiz parfüm, parfüm çeşitleri, kaliteli parfüm"
+        url="https://numaparfume.com/collection"
+        type="website"
+      />
+      <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white border-b">
         <div className="container mx-auto px-4 py-6">
@@ -77,6 +86,7 @@ const CollectionPage: React.FC = () => {
         )}
       </div>
     </div>
+    </>
   );
 };
 

@@ -1,0 +1,32 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://numaparfume.com/sitemap.xml
+
+# Allow all search engines
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: YandexBot
+Allow: /
+
+# Disallow admin pages
+Disallow: /admin
+Disallow: /api/
+Disallow: /payment-success
+Disallow: /payment-failed
+
+# Allow important pages
+Allow: /
+Allow: /product/*
+Allow: /category/*
+Allow: /collection
+Allow: /featured
+Allow: /forum
+
+# Crawl delay (optional)
+Crawl-delay: 1 

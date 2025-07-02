@@ -50,8 +50,8 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
         }
       },
       {
-        rootMargin: '50px', // Start loading 50px before the image comes into view
-        threshold: 0.1
+        rootMargin: '200px', // Start loading 200px before the image comes into view
+        threshold: 0.01
       }
     );
 

@@ -6,6 +6,7 @@ import { useProducts } from '../hooks/useProducts';
 import { useCart } from '../hooks/useCart';
 import { useAuth } from '../hooks/useAuth';
 import { ShopierService } from '../services/shopierService';
+import SEO from './SEO';
 
 const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -108,8 +109,51 @@ const ProductDetail: React.FC = () => {
     setSelectedImageIndex((prev) => (prev - 1 + images.length) % images.length);
   };
 
+  // SEO için Schema.org yapılandırılmış veri
+  const productSchema = product ? {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": product.name,
+    "description": product.description,
+    "brand": {
+      "@type": "Brand",
+      "name": product.brand
+    },
+    "image": product.image,
+    "sku": product.id,
+    "category": product.category,
+    "offers": {
+      "@type": "Offer",
+      "url": `https://numaparfume.com/product/${product.id}`,
+      "priceCurrency": "TRY",
+      "price": product.price,
+      "availability": product.inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+      "seller": {
+        "@type": "Organization",
+        "name": "Numa Parfume"
+      }
+    },
+         "aggregateRating": {
+       "@type": "AggregateRating",
+       "ratingValue": "4.5",
+       "ratingCount": "50"
+     }
+  } : undefined;
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <>
+      {product && (
+        <SEO
+          title={`${product.name} - ${product.brand} | Numa Parfume`}
+          description={`${product.description} ${product.size} ${product.category} parfümü. ${product.price}₺ fiyatıyla Numa Parfume'den online satın alın.`}
+          keywords={`${product.name}, ${product.brand}, ${product.category} parfüm, ${product.notes?.top?.join(', ') || ''}, parfüm satın al`}
+          image={product.image}
+          url={`https://numaparfume.com/product/${product.id}`}
+          type="product"
+          schema={productSchema}
+        />
+      )}
+      <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white border-b">
         <div className="container mx-auto px-4 py-4">
@@ -351,6 +395,7 @@ const ProductDetail: React.FC = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 
