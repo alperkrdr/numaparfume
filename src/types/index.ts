@@ -23,6 +23,12 @@ export interface Product {
   seoKeywords?: string[]; // SEO anahtar kelimeleri
   createdAt: Date;
   updatedAt: Date;
+  stockQuantity: number;      // Mevcut stok adedi
+  minStockLevel: number;      // Minimum stok seviyesi (uyarı için)
+  maxStockLevel: number;      // Maksimum stok seviyesi
+  totalSold: number;          // Toplam satış adedi
+  lastStockUpdate: string;    // Son stok güncelleme tarihi
+  stockHistory: StockHistory[]; // Stok geçmişi
 }
 
 export interface Category {
@@ -124,4 +130,59 @@ export interface AIRecommendationData {
   };
   recommendations: string[]; // Product IDs
   createdAt: Date;
+}
+
+export interface StockHistory {
+  id: string;
+  productId: string;
+  date: string;
+  type: 'increase' | 'decrease' | 'sale' | 'adjustment';
+  quantity: number;
+  previousStock: number;
+  newStock: number;
+  reason: string;
+  adminEmail?: string;
+}
+
+export interface StockAnalytics {
+  totalProducts: number;
+  inStockProducts: number;
+  outOfStockProducts: number;
+  lowStockProducts: number;
+  totalStockValue: number;
+  averageStockLevel: number;
+  topSellingProducts: Product[];
+  recentStockChanges: StockHistory[];
+  monthlyStockMovement: StockMovementData[];
+}
+
+export interface StockMovementData {
+  month: string;
+  stockIn: number;
+  stockOut: number;
+  sales: number;
+}
+
+export interface UserFavorites {
+  id: string;
+  userId: string;
+  userEmail: string;
+  productIds: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UserCart {
+  id: string;
+  userId: string;
+  userEmail: string;
+  items: CartItem[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CartItem {
+  productId: string;
+  quantity: number;
+  addedAt: string;
 }

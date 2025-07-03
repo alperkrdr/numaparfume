@@ -72,9 +72,9 @@ export class SettingsService {
       
     } catch (error) {
       // Firebase hatası sessizce handle et (development modunda sadece bir kez log)
-      if (process.env.NODE_ENV === 'development' && !(window as any).__firebaseErrorLogged) {
-        console.warn('🔥 Firebase bağlantı hatası - default ayarlar kullanılıyor');
-        (window as any).__firebaseErrorLogged = true;
+      if (process.env.NODE_ENV === 'development' && !(window as any).__firebaseSettingsErrorLogged) {
+        console.info('ℹ️ Firebase ayarlar yüklenemedi - varsayılan ayarlar kullanılıyor');
+        (window as any).__firebaseSettingsErrorLogged = true;
       }
       return { settings: { id: SETTINGS_DOC_ID, ...DEFAULT_SETTINGS }, fromCache: true };
     }

@@ -4,6 +4,7 @@ import { Product } from '../types';
 import { ShoppingBag, Heart, Star, Package, Plus } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useCart } from '../hooks/useCart';
+import { useFavorites } from '../hooks/useFavorites';
 import { ShopierService } from '../services/shopierService';
 import OptimizedImage from './OptimizedImage';
 
@@ -12,11 +13,11 @@ interface ProductCardProps {
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
-  const [isLiked, setIsLiked] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [pendingPurchase, setPendingPurchase] = useState(false);
   const { user, openLoginModal } = useAuth();
-  const { addToCart } = useCart();
+  const { addToCart: addToCartOld } = useCart();
+  const { isFavorite, toggleFavorite, addToCart } = useFavorites();
   const navigate = useNavigate();
 
   // Pending purchase kontrol et (kullanıcı giriş yaptığında)
@@ -99,12 +100,17 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
   const [isAddingToCart, setIsAddingToCart] = useState(false);
 
-  const handleAddToCart = (e: React.MouseEvent) => {
+  const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     
     if (isAddingToCart) {
       console.log('⏸️ Sepete ekleme işlemi devam ediyor, atlandı');
+      return;
+    }
+
+    if (!user) {
+      openLoginModal();
       return;
     }
     
@@ -122,19 +128,28 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     
     try {
       setIsAddingToCart(true);
-      addToCart(product, 1);
+      await addToCart(product.id, 1);
       console.log('✅ addToCart fonksiyonu çağrıldı');
       
-      // 500ms sonra butonu tekrar kullanılabilir yap
+      // Başarı bildirimi
+      const notification = document.createElement('div');
+      notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
+      notification.textContent = '✅ Ürün sepete eklendi!';
+      document.body.appendChild(notification);
+      
       setTimeout(() => {
-        setIsAddingToCart(false);
-        console.log('🔄 ProductCard isAddingToCart=false yapıldı');
-      }, 500);
+        notification.remove();
+      }, 3000);
       
     } catch (error) {
       console.error('❌ Sepete ekleme hatası:', error);
+      if (error instanceof Error) {
+        alert(error.message);
+      } else {
+        alert('Ürün sepete eklenirken bir hata oluştu.');
+      }
+    } finally {
       setIsAddingToCart(false);
-      alert('Ürün sepete eklenirken bir hata oluştu.');
     }
   };
 
@@ -168,22 +183,44 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               %{discountPercentage} İndirim
             </span>
           )}
-          {!product.inStock && (
+          {!product.inStock || (product.stockQuantity || 0) === 0 ? (
             <span className="bg-gray-500 text-white px-3 py-1 rounded-full text-xs font-medium">
               Tükendi
             </span>
-          )}
+          ) : product.stockQuantity && product.stockQuantity <= (product.minStockLevel || 5) ? (
+            <span className="bg-yellow-500 text-white px-3 py-1 rounded-full text-xs font-medium">
+              Son {product.stockQuantity} Adet
+            </span>
+          ) : null}
         </div>
 
-        {/* Like Button */}
+        {/* Favorite Button */}
         <button
-          onClick={() => setIsLiked(!isLiked)}
+          onClick={async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            if (!user) {
+              openLoginModal();
+              return;
+            }
+            
+            try {
+              await toggleFavorite(product.id);
+            } catch (error) {
+              console.error('❌ Favori güncelleme hatası:', error);
+              if (error instanceof Error) {
+                alert(error.message);
+              }
+            }
+          }}
           className="absolute top-4 right-4 w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white transition-all duration-300 group/heart"
+          title={isFavorite(product.id) ? 'Favorilerden çıkar' : 'Favorilere ekle'}
         >
           <Heart 
             size={18} 
             className={`transition-all duration-300 group-hover/heart:scale-110 ${
-              isLiked ? 'text-red-500 fill-red-500' : 'text-gray-600'
+              isFavorite(product.id) ? 'text-red-500 fill-red-500' : 'text-gray-600'
             }`}
           />
         </button>
@@ -191,7 +228,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         {/* Quick Add to Cart */}
         <button
           onClick={handleAddToCart}
-          disabled={!product.inStock || isAddingToCart}
+          disabled={!product.inStock || (product.stockQuantity || 0) === 0 || isAddingToCart}
           className={`absolute bottom-4 right-4 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500 opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl ${
             isAddingToCart 
               ? 'bg-green-500 text-white scale-110 animate-pulse' 

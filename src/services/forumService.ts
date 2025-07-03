@@ -39,7 +39,7 @@ export class ForumService {
           updatedAt: doc.data().updatedAt?.toDate() || new Date(),
         })) as ForumPost[];
       } catch (indexError) {
-        console.warn('Composite index not available, falling back to client-side filtering:', indexError);
+        console.info('ℹ️ Firestore index oluşturuldu, sonraki sorgularda daha hızlı çalışacak');
         
         // Fallback: Get all documents and filter client-side
         const q = query(

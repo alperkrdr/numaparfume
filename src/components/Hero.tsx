@@ -98,7 +98,7 @@ const Hero: React.FC<HeroProps> = () => {
               <div className="mt-8 pt-8 border-t border-gray-200">
                 <button
                   onClick={() => setIsAIModalOpen(true)}
-                  className="group bg-gradient-to-r from-purple-600 to-pink-600 text-white px-8 py-4 rounded-full font-medium hover:from-purple-700 hover:to-pink-700 transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center gap-3 mx-auto lg:mx-0"
+                  className="group bg-gradient-to-r from-purple-600 to-pink-600 text-white px-8 py-4 rounded-full font-medium hover:from-purple-700 hover:to-pink-700 transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center gap-3 w-full sm:w-auto mx-auto lg:mx-0 justify-center sm:justify-start"
                 >
                   <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center group-hover:rotate-12 transition-transform">
                     <Bot size={18} />

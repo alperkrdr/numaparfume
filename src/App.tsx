@@ -7,6 +7,7 @@ import Footer from './components/Footer';
 import { useProducts } from './hooks/useProducts';
 import { ForumService } from './services/forumService';
 import SEO from './components/SEO';
+import CampaignBar from './components/CampaignBar';
 
 // Lazy load components for better performance
 const ProductDetail = lazy(() => import('./components/ProductDetail'));
@@ -41,22 +42,21 @@ function App() {
   }, []);
 
   React.useEffect(() => {
-    console.log('🔄 Filtreleme useEffect çalıştı:', { 
-      currentView, 
-      selectedCategory, 
-      productsLength: products.length 
-    });
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🔄 Filtreleme güncellendi:', { 
+        currentView, 
+        selectedCategory, 
+        productsLength: products.length 
+      });
+    }
     
     if (currentView === 'featured' || currentView === 'collection') {
       const featured = getFeaturedProducts();
-      console.log('⭐ Featured ürünler:', featured.length);
       setFilteredProducts(featured);
     } else if (selectedCategory === 'all') {
-      console.log('🎯 Tüm ürünler gösteriliyor:', products.length);
       setFilteredProducts(products);
     } else {
       const categoryProducts = getProductsByCategory(selectedCategory);
-      console.log('📂 Kategori ürünleri:', selectedCategory, categoryProducts.length);
       setFilteredProducts(categoryProducts);
     }
   }, [products, selectedCategory, currentView, getProductsByCategory, getFeaturedProducts]);
@@ -78,10 +78,11 @@ function App() {
   };
 
   const handleCategorySelect = (category: string) => {
-    console.log('🎯 Kategori seçildi:', category);
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🎯 Kategori seçildi:', category);
+    }
     setSelectedCategory(category);
     setCurrentView('all');
-    console.log('🔄 State güncellendi:', { selectedCategory: category, currentView: 'all' });
   };
 
 
@@ -95,7 +96,7 @@ function App() {
   };
 
   return (
-    <Router future={{ v7_relativeSplatPath: true }}>
+    <Router future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
       <div className="min-h-screen bg-white">
         <Routes>
           <Route path="/admin" element={
@@ -107,6 +108,7 @@ function App() {
           {/* Product Detail Page */}
           <Route path="/product/:id" element={
             <Suspense fallback={<LoadingSpinner />}>
+              <CampaignBar />
               <Header onSearch={handleSearch} onCategorySelect={handleCategorySelect} />
               <ProductDetail />
               <Footer />
@@ -116,6 +118,7 @@ function App() {
           {/* Collection Page */}
           <Route path="/collection" element={
             <Suspense fallback={<LoadingSpinner />}>
+              <CampaignBar />
               <Header onSearch={handleSearch} onCategorySelect={handleCategorySelect} />
               <CollectionPage />
               <Footer />
@@ -125,6 +128,7 @@ function App() {
           {/* Category Pages */}
           <Route path="/category/:category" element={
             <Suspense fallback={<LoadingSpinner />}>
+              <CampaignBar />
               <Header onSearch={handleSearch} onCategorySelect={handleCategorySelect} />
               <CategoryPage />
               <Footer />
@@ -134,6 +138,7 @@ function App() {
           {/* Featured Page */}
           <Route path="/featured" element={
             <Suspense fallback={<LoadingSpinner />}>
+              <CampaignBar />
               <Header onSearch={handleSearch} onCategorySelect={handleCategorySelect} />
               <FeaturedPage />
               <Footer />
@@ -143,6 +148,7 @@ function App() {
           {/* Forum */}
           <Route path="/forum" element={
             <Suspense fallback={<LoadingSpinner />}>
+              <CampaignBar />
               <Header onSearch={handleSearch} onCategorySelect={handleCategorySelect} />
               <Forum />
               <Footer />
@@ -172,6 +178,7 @@ function App() {
           <Route path="/" element={
             <>
               <SEO />
+              <CampaignBar />
               <Header onSearch={handleSearch} onCategorySelect={handleCategorySelect} />
               <Hero />
               <main className="container mx-auto px-4 py-12">

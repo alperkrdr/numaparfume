@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Plus, Edit, Trash2, Save, X, Eye, EyeOff, Upload, 
-  Settings, Bot, RefreshCw, LogOut, Users
+  Settings, Bot, RefreshCw, LogOut, Users, Package, 
+  TrendingUp, AlertTriangle, BarChart3, History
 } from 'lucide-react';
 import { AuthService } from '../services/authService';
 import { ProductService } from '../services/productService';
 import { SettingsService } from '../services/settingsService';
 import { GeminiService } from '../services/geminiService';
+import { StockService } from '../services/stockService';
 import { useSettings } from '../hooks/useSettings';
 import { useForum } from '../hooks/useForum';
 import { onAuthStateChanged, signOut, User as FirebaseUser } from 'firebase/auth';
@@ -69,12 +71,30 @@ export const AdminPanel: React.FC = () => {
     featured: false,
     collection: false,
     shopierLink: '',
-    seoKeywords: []
+    seoKeywords: [],
+    // Stok yönetimi alanları
+    stockQuantity: 0,
+    minStockLevel: 5,
+    maxStockLevel: 100,
+    totalSold: 0,
+    lastStockUpdate: new Date().toISOString(),
+    stockHistory: []
   });
 
   // Products data
   const [products, setProducts] = useState<Product[]>([]);
   const [productsLoading, setProductsLoading] = useState(false);
+
+  // Stock management states
+  const [stockAnalytics, setStockAnalytics] = useState<any>(null);
+  const [stockLoading, setStockLoading] = useState(false);
+  const [stockAlerts, setStockAlerts] = useState<any>({ lowStock: [], outOfStock: [], highStock: [] });
+  const [selectedProductForStock, setSelectedProductForStock] = useState<Product | null>(null);
+  const [stockUpdateForm, setStockUpdateForm] = useState({
+    quantity: 0,
+    type: 'increase' as 'increase' | 'decrease' | 'sale' | 'adjustment',
+    reason: ''
+  });
 
   // Firebase Auth state listener
   useEffect(() => {
@@ -107,6 +127,7 @@ export const AdminPanel: React.FC = () => {
   useEffect(() => {
     if (isAuthenticated) {
       loadInitialData();
+      loadStockData();
     }
   }, [isAuthenticated]);
 
@@ -165,6 +186,22 @@ export const AdminPanel: React.FC = () => {
     await loadGeminiSettings();
     await fetchProducts();
     setIsLoading(false);
+  };
+
+  const loadStockData = async () => {
+    try {
+      setStockLoading(true);
+      const [analytics, alerts] = await Promise.all([
+        StockService.getStockAnalytics(),
+        StockService.getStockAlerts()
+      ]);
+      setStockAnalytics(analytics);
+      setStockAlerts(alerts);
+    } catch (error) {
+      console.error('❌ Stok verileri yüklenirken hata:', error);
+    } finally {
+      setStockLoading(false);
+    }
   };
 
   const fetchSettingsAndSetConnectionStatus = async () => {
@@ -474,7 +511,14 @@ export const AdminPanel: React.FC = () => {
           inStock: true,
           featured: false,
           shopierLink: '',
-          seoKeywords: []
+          seoKeywords: [],
+          // Stok yönetimi alanları
+          stockQuantity: 0,
+          minStockLevel: 5,
+          maxStockLevel: 100,
+          totalSold: 0,
+          lastStockUpdate: new Date().toISOString(),
+          stockHistory: []
         });
         setIsAddingProduct(false);
       }
@@ -509,6 +553,43 @@ export const AdminPanel: React.FC = () => {
     }
   };
 
+  // Stock management functions
+  const handleStockUpdate = async () => {
+    if (!selectedProductForStock || !stockUpdateForm.reason.trim()) {
+      alert('Lütfen tüm alanları doldurun');
+      return;
+    }
+
+    try {
+      await StockService.updateProductStock(
+        selectedProductForStock.id,
+        stockUpdateForm.quantity,
+        stockUpdateForm.type,
+        stockUpdateForm.reason,
+        currentUser?.email || undefined
+      );
+
+      // Verileri yenile
+      await Promise.all([
+        fetchProducts(),
+        loadStockData()
+      ]);
+
+      // Form temizle
+      setStockUpdateForm({
+        quantity: 0,
+        type: 'increase',
+        reason: ''
+      });
+      setSelectedProductForStock(null);
+
+      alert('Stok başarıyla güncellendi!');
+    } catch (error) {
+      console.error('❌ Stok güncelleme hatası:', error);
+      alert('Stok güncellenirken hata oluştu.');
+    }
+  };
+
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, isProduct = false) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -523,18 +604,18 @@ export const AdminPanel: React.FC = () => {
 
       console.log(`📁 Orijinal dosya: ${file.name} (${ImageUtils.getBase64SizeKB(await ImageUtils.fileToBase64(file))}KB)`);
 
-      // Image'i compress et
+      // Daha yüksek kaliteli görsel ayarları
       const compressedBase64 = await ImageUtils.fileToCompressedBase64(file, {
-        maxWidth: 800,
-        maxHeight: 600,
-        quality: 0.8,
-        maxSizeKB: 900 // Firestore limitinin altında
+        maxWidth: 1200,        // 800'den 1200'e yükseltildi
+        maxHeight: 1200,       // 600'den 1200'e yükseltildi (aspect ratio otomatik korunuyor)
+        quality: 0.92,         // 0.8'den 0.92'ye yükseltildi
+        maxSizeKB: 1500        // 900KB'den 1500KB'ye artırıldı
       });
 
       const finalSizeKB = ImageUtils.getBase64SizeKB(compressedBase64);
-      console.log(`🗜️ Compress edilmiş: ${finalSizeKB}KB`);
+      console.log(`🗜️ Yüksek kaliteli compress: ${finalSizeKB}KB`);
 
-      if (finalSizeKB > 1000) {
+      if (finalSizeKB > 1600) {
         alert('Dosya çok büyük. Lütfen daha küçük bir görsel seçin.');
         return;
       }
@@ -547,7 +628,18 @@ export const AdminPanel: React.FC = () => {
           }
         }
 
-      console.log('✅ Görsel başarıyla yüklendi ve compress edildi');
+      console.log('✅ Yüksek kaliteli görsel başarıyla yüklendi');
+      
+      // Başarı bildirimi
+      const notification = document.createElement('div');
+      notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
+      notification.textContent = '✅ Görsel başarıyla yüklendi!';
+      document.body.appendChild(notification);
+      
+      setTimeout(() => {
+        notification.remove();
+      }, 3000);
+      
     } catch (error) {
       console.error('❌ Image upload hatası:', error);
       alert('Görsel yüklenirken bir hata oluştu. Lütfen tekrar deneyin.');
@@ -676,6 +768,7 @@ export const AdminPanel: React.FC = () => {
             {[
               { id: 'forum', label: 'Forum Yönetimi', icon: Users },
               { id: 'products', label: 'Ürün Yönetimi', icon: Plus },
+              { id: 'stock', label: 'Stok Yönetimi', icon: Package },
               { id: 'settings', label: 'Site Ayarları', icon: Settings }
             ].map((tab) => (
               <button
@@ -1103,6 +1196,307 @@ export const AdminPanel: React.FC = () => {
                       </div>
                     ))
                   )}
+                </div>
+              </div>
+            )}
+
+            {/* Stock Management Tab */}
+            {activeTab === 'stock' && (
+              <div className="space-y-6">
+                <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                  <Package className="w-8 h-8 text-blue-600" />
+                  Stok Yönetimi
+                </h2>
+
+                {/* Stok Analitikleri */}
+                {!stockLoading && stockAnalytics && (
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-blue-600 text-sm font-medium">Toplam Ürün</p>
+                          <p className="text-2xl font-bold text-blue-900">{stockAnalytics.totalProducts}</p>
+                        </div>
+                        <Package className="w-8 h-8 text-blue-600" />
+                      </div>
+                    </div>
+                    
+                    <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-green-600 text-sm font-medium">Stokta Var</p>
+                          <p className="text-2xl font-bold text-green-900">{stockAnalytics.inStockProducts}</p>
+                        </div>
+                        <TrendingUp className="w-8 h-8 text-green-600" />
+                      </div>
+                    </div>
+                    
+                    <div className="bg-red-50 p-4 rounded-lg border border-red-200">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-red-600 text-sm font-medium">Stokta Yok</p>
+                          <p className="text-2xl font-bold text-red-900">{stockAnalytics.outOfStockProducts}</p>
+                        </div>
+                        <AlertTriangle className="w-8 h-8 text-red-600" />
+                      </div>
+                    </div>
+                    
+                    <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-yellow-600 text-sm font-medium">Düşük Stok</p>
+                          <p className="text-2xl font-bold text-yellow-900">{stockAnalytics.lowStockProducts}</p>
+                        </div>
+                        <AlertTriangle className="w-8 h-8 text-yellow-600" />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Stok Uyarıları */}
+                {(stockAlerts.lowStock.length > 0 || stockAlerts.outOfStock.length > 0) && (
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <h3 className="text-lg font-semibold text-yellow-800 mb-3 flex items-center gap-2">
+                      <AlertTriangle className="w-5 h-5" />
+                      Stok Uyarıları
+                    </h3>
+                    {stockAlerts.outOfStock.length > 0 && (
+                      <div className="mb-3">
+                        <p className="text-red-700 font-medium mb-2">🔴 Tükenen Ürünler:</p>
+                        <ul className="list-disc list-inside text-sm text-red-600 space-y-1">
+                          {stockAlerts.outOfStock.map((product: Product) => (
+                            <li key={product.id}>{product.name}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {stockAlerts.lowStock.length > 0 && (
+                      <div>
+                        <p className="text-yellow-700 font-medium mb-2">🟡 Düşük Stok:</p>
+                        <ul className="list-disc list-inside text-sm text-yellow-600 space-y-1">
+                          {stockAlerts.lowStock.map((product: Product) => (
+                            <li key={product.id}>{product.name} - Kalan: {product.stockQuantity}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* En Çok Satılan Ürünler */}
+                {stockAnalytics && stockAnalytics.topSellingProducts.length > 0 && (
+                  <div className="bg-white p-6 rounded-lg border border-gray-200">
+                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                      <TrendingUp className="w-5 h-5 text-green-600" />
+                      En Çok Satılan Ürünler
+                    </h3>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b">
+                            <th className="text-left py-2">Ürün</th>
+                            <th className="text-left py-2">Toplam Satış</th>
+                            <th className="text-left py-2">Mevcut Stok</th>
+                            <th className="text-left py-2">Durum</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {stockAnalytics.topSellingProducts.map((product: Product) => (
+                            <tr key={product.id} className="border-b hover:bg-gray-50">
+                              <td className="py-2">{product.name}</td>
+                              <td className="py-2 font-semibold text-green-600">{product.totalSold || 0}</td>
+                              <td className="py-2">{product.stockQuantity || 0}</td>
+                              <td className="py-2">
+                                {(product.stockQuantity || 0) > (product.minStockLevel || 5) ? (
+                                  <span className="text-green-600">✅ Normal</span>
+                                ) : (product.stockQuantity || 0) > 0 ? (
+                                  <span className="text-yellow-600">⚠️ Düşük</span>
+                                ) : (
+                                  <span className="text-red-600">❌ Tükendi</span>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                {/* Ürün Stok Yönetimi */}
+                <div className="bg-white p-6 rounded-lg border border-gray-200">
+                  <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                    <Package className="w-5 h-5 text-blue-600" />
+                    Ürün Stok Durumu
+                  </h3>
+                  
+                  {products.length === 0 ? (
+                    <p className="text-gray-500 text-center py-8">Henüz ürün bulunmuyor.</p>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b bg-gray-50">
+                            <th className="text-left py-3 px-2">Ürün</th>
+                            <th className="text-left py-3 px-2">Mevcut Stok</th>
+                            <th className="text-left py-3 px-2">Min/Max</th>
+                            <th className="text-left py-3 px-2">Toplam Satış</th>
+                            <th className="text-left py-3 px-2">Durum</th>
+                            <th className="text-left py-3 px-2">İşlemler</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {products.map((product) => (
+                            <tr key={product.id} className="border-b hover:bg-gray-50">
+                              <td className="py-3 px-2">
+                                <div className="flex items-center gap-3">
+                                  {product.image && (
+                                    <img src={product.image} alt={product.name} className="w-10 h-10 object-cover rounded" />
+                                  )}
+                                  <div>
+                                    <p className="font-medium">{product.name}</p>
+                                    <p className="text-gray-500 text-xs">{product.price}₺</p>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="py-3 px-2">
+                                <span className={`font-semibold ${
+                                  (product.stockQuantity || 0) === 0 ? 'text-red-600' :
+                                  (product.stockQuantity || 0) <= (product.minStockLevel || 5) ? 'text-yellow-600' :
+                                  'text-green-600'
+                                }`}>
+                                  {product.stockQuantity || 0}
+                                </span>
+                              </td>
+                              <td className="py-3 px-2 text-gray-600">
+                                {product.minStockLevel || 5} / {product.maxStockLevel || 100}
+                              </td>
+                              <td className="py-3 px-2 text-blue-600 font-medium">
+                                {product.totalSold || 0}
+                              </td>
+                              <td className="py-3 px-2">
+                                {(product.stockQuantity || 0) > (product.minStockLevel || 5) ? (
+                                  <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Normal</span>
+                                ) : (product.stockQuantity || 0) > 0 ? (
+                                  <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs">Düşük</span>
+                                ) : (
+                                  <span className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs">Tükendi</span>
+                                )}
+                              </td>
+                              <td className="py-3 px-2">
+                                <button
+                                  onClick={() => setSelectedProductForStock(product)}
+                                  className="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700"
+                                >
+                                  Stok Güncelle
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+
+                {/* Stok Güncelleme Modal */}
+                {selectedProductForStock && (
+                  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
+                      <div className="p-6">
+                        <div className="flex justify-between items-center mb-4">
+                          <h3 className="text-lg font-semibold">Stok Güncelle</h3>
+                          <button
+                            onClick={() => setSelectedProductForStock(null)}
+                            className="text-gray-500 hover:text-gray-700"
+                          >
+                            <X className="w-5 h-5" />
+                          </button>
+                        </div>
+                        
+                        <div className="mb-4">
+                          <p className="text-sm text-gray-600 mb-2">Ürün: <strong>{selectedProductForStock.name}</strong></p>
+                          <p className="text-sm text-gray-600">Mevcut Stok: <strong>{selectedProductForStock.stockQuantity || 0}</strong></p>
+                        </div>
+
+                        <div className="space-y-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">İşlem Türü</label>
+                            <select
+                              value={stockUpdateForm.type}
+                              onChange={(e) => setStockUpdateForm({
+                                ...stockUpdateForm,
+                                type: e.target.value as any
+                              })}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            >
+                              <option value="increase">Stok Artır</option>
+                              <option value="decrease">Stok Azalt</option>
+                              <option value="adjustment">Manuel Düzeltme</option>
+                              <option value="sale">Satış</option>
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              {stockUpdateForm.type === 'adjustment' ? 'Yeni Stok Miktarı' : 'Miktar'}
+                            </label>
+                            <input
+                              type="number"
+                              min="0"
+                              value={stockUpdateForm.quantity}
+                              onChange={(e) => setStockUpdateForm({
+                                ...stockUpdateForm,
+                                quantity: parseInt(e.target.value) || 0
+                              })}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Açıklama</label>
+                            <input
+                              type="text"
+                              value={stockUpdateForm.reason}
+                              onChange={(e) => setStockUpdateForm({
+                                ...stockUpdateForm,
+                                reason: e.target.value
+                              })}
+                              placeholder="Stok güncelleme sebebi..."
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                          </div>
+
+                          <div className="flex gap-3 pt-4">
+                            <button
+                              onClick={handleStockUpdate}
+                              className="flex-1 bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700"
+                            >
+                              Güncelle
+                            </button>
+                            <button
+                              onClick={() => setSelectedProductForStock(null)}
+                              className="flex-1 bg-gray-300 text-gray-700 py-2 rounded-md hover:bg-gray-400"
+                            >
+                              İptal
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Yenile Butonu */}
+                <div className="flex justify-end">
+                  <button
+                    onClick={loadStockData}
+                    disabled={stockLoading}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
+                  >
+                    <RefreshCw className={`w-4 h-4 ${stockLoading ? 'animate-spin' : ''}`} />
+                    Stok Verilerini Yenile
+                  </button>
                 </div>
               </div>
             )}
