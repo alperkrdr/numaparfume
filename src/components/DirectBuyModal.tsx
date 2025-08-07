@@ -52,7 +52,7 @@ const DirectBuyModal: React.FC<DirectBuyModalProps> = ({ isOpen, onClose, produc
         quantity: 1
       }];
 
-      ShopierService.createCartPayment(
+      await ShopierService.createCartPayment(
         shopierCartItems,
         {
           name: buyerInfo.name,

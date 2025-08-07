@@ -87,7 +87,7 @@ const CartModal: React.FC<CartModalProps> = ({
           }
         : undefined;
 
-      ShopierService.createCartPayment(
+      await ShopierService.createCartPayment(
         shopierCartItems,
         {
           name: buyerInfo.name,
