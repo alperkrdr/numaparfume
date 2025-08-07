@@ -32,7 +32,7 @@ export const SHOPIER_CONFIG = {
   
   // 🔧 Development/Production Modu
   MOCK_MODE: false, // true: Test modu, false: Gerçek ödeme
-  DEBUG_MODE: false,
+  DEBUG_MODE: true, // Debug modu aktif (production'da false yapın)
   
   // 📧 Default Buyer Bilgileri (Eksik bilgiler için)
   DEFAULT_BUYER: {
