@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Menu, X, ShoppingBag, User, MessageSquare, LogOut, Heart, Settings } from 'lucide-react';
+import { Search, Menu, X, ShoppingBag, MessageSquare, Heart } from 'lucide-react';
 import { useSettings } from '../hooks/useSettings';
-import { useAuth } from '../hooks/useAuth';
 import { useCart } from '../hooks/useCart';
 import { useFavorites } from '../hooks/useFavorites';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import LoginModal from './LoginModal';
 import CartModal from './CartModal';
 
 interface HeaderProps {
@@ -15,40 +13,25 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ onSearch, onCategorySelect }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   
   const { settings } = useSettings();
-  const { user, logout, isAdmin } = useAuth();
   
   const {
     cartItems,
-    isUpdating,
     updateQuantity,
     removeFromCart,
     clearCart,
     getCartTotal,
-    getCartItemCount
+    getCartItemCount,
   } = useCart();
   
-  const { cartCount, favorites } = useFavorites();
+  const { favorites } = useFavorites();
   const favoriteCount = favorites.length;
+  const cartCount = getCartItemCount();
   const location = useLocation();
   const navigate = useNavigate();
-
-  // Close dropdowns when clicking outside
-  useEffect(() => {
-    const handleClickOutside = () => {
-      setIsUserDropdownOpen(false);
-    };
-    
-    if (isUserDropdownOpen) {
-      document.addEventListener('click', handleClickOutside);
-      return () => document.removeEventListener('click', handleClickOutside);
-    }
-  }, [isUserDropdownOpen]);
 
   // Mobile menu açık iken scroll'u engelle
   useEffect(() => {
@@ -71,27 +54,8 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onCategorySelect }) => {
     }
   };
 
-  const handleUserAction = () => {
-    if (user) {
-      setIsUserDropdownOpen(!isUserDropdownOpen);
-    } else {
-      setIsLoginModalOpen(true);
-    }
-  };
-
-  const handleLogout = async () => {
-    try {
-      await logout();
-      setIsUserDropdownOpen(false);
-      setIsMenuOpen(false);
-      navigate('/');
-    } catch (error) {
-      console.error('Logout error:', error);
-    }
-  };
-
   const categories = [
-    { name: 'Tümü', value: 'all', path: '/' },
+    { name: 'Tümü', value: 'all', path: '/products' },
     { name: 'Kadın', value: 'kadın', path: '/category/kadın' },
     { name: 'Erkek', value: 'erkek', path: '/category/erkek' },
     { name: 'Unisex', value: 'unisex', path: '/category/unisex' }
@@ -107,18 +71,12 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onCategorySelect }) => {
   };
 
   const handleCartClick = () => {
-    if (!user) {
-      setIsLoginModalOpen(true);
-      return;
-    }
     setIsCartOpen(true);
   };
 
   const handleFavoritesClick = () => {
-    if (!user) {
-      setIsLoginModalOpen(true);
-      return;
-    }
+    // Favoriler için giriş gerekip gerekmediği kullanıcıya bağlı
+    // Şimdilik doğrudan yönlendirme yapılıyor
     navigate('/favorites');
   };
 
@@ -210,75 +168,16 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onCategorySelect }) => {
               {/* Cart Button */}
               <button 
                 onClick={handleCartClick}
-                className={`relative p-2 text-gray-700 hover:text-purple-600 hover:bg-gray-100 rounded-lg transition-all duration-500 ${
-                  isUpdating ? 'scale-110 text-green-600' : ''
-                }`}
+                className="relative p-2 text-gray-700 hover:text-purple-600 hover:bg-gray-100 rounded-lg transition-all duration-500"
                 title="Sepetim"
               >
-                <ShoppingBag size={20} className={`transition-all duration-500 ${isUpdating ? 'animate-bounce text-green-600' : ''}`} />
+                <ShoppingBag size={20} />
                 {cartCount > 0 && (
-                  <span className={`absolute -top-1 -right-1 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center transition-all duration-500 min-w-[20px] ${
-                    isUpdating 
-                      ? 'scale-125 bg-green-500 animate-pulse shadow-lg' 
-                      : 'bg-purple-600 scale-100'
-                  }`}>
+                  <span className="absolute -top-1 -right-1 bg-purple-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center min-w-[20px]">
                     {cartCount}
                   </span>
                 )}
               </button>
-              
-              {/* User Menu */}
-              <div className="relative hidden md:block">
-                <button 
-                  onClick={handleUserAction}
-                  className="flex items-center space-x-2 px-3 py-2 text-gray-700 hover:text-purple-600 hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                  <User size={18} />
-                  <span className="text-sm font-medium">
-                    {user ? (user.displayName || user.email.split('@')[0]) : 'Giriş'}
-                  </span>
-                </button>
-
-                {/* User Dropdown */}
-                {user && isUserDropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
-                    <div className="px-4 py-2 border-b border-gray-100">
-                      <p className="text-sm font-medium text-gray-900">
-                        {user.displayName || user.email.split('@')[0]}
-                      </p>
-                      <p className="text-xs text-gray-500">{user.email}</p>
-                    </div>
-                    
-                    <Link
-                      to="/favorites"
-                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                      onClick={() => setIsUserDropdownOpen(false)}
-                    >
-                      <Heart className="w-4 h-4 mr-3" />
-                      Favorilerim
-                    </Link>
-                    
-                    {isAdmin && (
-                      <Link
-                        to="/admin"
-                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                        onClick={() => setIsUserDropdownOpen(false)}
-                      >
-                        <Settings className="w-4 h-4 mr-3" />
-                        Admin Panel
-                      </Link>
-                    )}
-                    
-                    <button
-                      onClick={handleLogout}
-                      className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                    >
-                      <LogOut className="w-4 h-4 mr-3" />
-                      Çıkış Yap
-                    </button>
-                  </div>
-                )}
-              </div>
               
               {/* Mobile Menu Button */}
               <button
@@ -307,8 +206,8 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onCategorySelect }) => {
                   }`}></span>
                   </button>
                 ))}
-              <Link
-                to="/collection"
+              <button
+                onClick={() => navigate('/collection')}
                 className={`text-gray-700 hover:text-purple-600 font-medium transition-colors relative group ${
                   location.pathname === '/collection' ? 'text-purple-600' : ''
                 }`}
@@ -317,9 +216,9 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onCategorySelect }) => {
                 <span className={`absolute bottom-0 left-0 h-0.5 bg-purple-600 transition-all duration-300 ${
                   location.pathname === '/collection' ? 'w-full' : 'w-0 group-hover:w-full'
                 }`}></span>
-              </Link>
-              <Link
-                to="/featured"
+              </button>
+              <button
+                onClick={() => navigate('/featured')}
                 className={`text-gray-700 hover:text-purple-600 font-medium transition-colors relative group ${
                   location.pathname === '/featured' ? 'text-purple-600' : ''
                 }`}
@@ -328,7 +227,7 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onCategorySelect }) => {
                 <span className={`absolute bottom-0 left-0 h-0.5 bg-purple-600 transition-all duration-300 ${
                   location.pathname === '/featured' ? 'w-full' : 'w-0 group-hover:w-full'
                 }`}></span>
-              </Link>
+              </button>
             </div>
           </nav>
         </div>
@@ -375,64 +274,6 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onCategorySelect }) => {
                 </div>
               </form>
 
-                {/* User Section - Mobile */}
-                {user ? (
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <div className="flex items-center space-x-3 mb-3">
-                      <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                        <User className="w-5 h-5 text-purple-600" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-gray-900">
-                          {user.displayName || user.email.split('@')[0]}
-                        </p>
-                        <p className="text-sm text-gray-500">{user.email}</p>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Link
-                        to="/favorites"
-                        className="flex items-center py-2 px-3 text-gray-700 hover:bg-white rounded-lg transition-colors"
-                        onClick={() => setIsMenuOpen(false)}
-                      >
-                        <Heart className="w-4 h-4 mr-3" />
-                        Favorilerim ({favoriteCount})
-                      </Link>
-                      
-                      {isAdmin && (
-                <Link
-                          to="/admin"
-                          className="flex items-center py-2 px-3 text-gray-700 hover:bg-white rounded-lg transition-colors"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                          <Settings className="w-4 h-4 mr-3" />
-                          Admin Panel
-                </Link>
-                      )}
-                      
-                      <button
-                        onClick={handleLogout}
-                        className="flex items-center w-full py-2 px-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                      >
-                        <LogOut className="w-4 h-4 mr-3" />
-                        Çıkış Yap
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => {
-                      setIsLoginModalOpen(true);
-                      setIsMenuOpen(false);
-                    }}
-                    className="w-full flex items-center justify-center py-3 px-4 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
-                  >
-                    <User className="w-5 h-5 mr-2" />
-                    Giriş Yap / Kaydol
-                  </button>
-                )}
-
                 {/* Mobile Navigation */}
                 <nav className="space-y-1">
                   <Link
@@ -445,42 +286,34 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onCategorySelect }) => {
                   </Link>
                   
                   {categories.map((category) => (
-                <button 
+                    <button
                       key={category.value}
                       onClick={() => handleCategoryClick(category)}
                       className="flex items-center w-full py-3 px-4 text-gray-700 hover:text-purple-600 hover:bg-gray-50 rounded-lg transition-colors text-left"
-                >
+                    >
                       {category.name}
-                </button>
+                    </button>
                   ))}
                   
-                  <Link
-                    to="/collection"
-                    className="flex items-center py-3 px-4 text-gray-700 hover:text-purple-600 hover:bg-gray-50 rounded-lg transition-colors"
-                    onClick={() => setIsMenuOpen(false)}
+                  <button
+                    onClick={() => { navigate('/collection'); setIsMenuOpen(false); }}
+                    className="flex items-center w-full py-3 px-4 text-gray-700 hover:text-purple-600 hover:bg-gray-50 rounded-lg transition-colors text-left"
                   >
                     Koleksiyon
-                  </Link>
+                  </button>
                   
-                  <Link
-                    to="/featured"
-                    className="flex items-center py-3 px-4 text-gray-700 hover:text-purple-600 hover:bg-gray-50 rounded-lg transition-colors"
-                    onClick={() => setIsMenuOpen(false)}
+                  <button
+                    onClick={() => { navigate('/featured'); setIsMenuOpen(false); }}
+                    className="flex items-center w-full py-3 px-4 text-gray-700 hover:text-purple-600 hover:bg-gray-50 rounded-lg transition-colors text-left"
                   >
                     Öne Çıkanlar
-                  </Link>
-              </nav>
+                  </button>
+                </nav>
               </div>
             </div>
-            </div>
-          )}
+          </div>
+        )}
       </header>
-
-      {/* Login Modal */}
-      <LoginModal
-        isOpen={isLoginModalOpen}
-        onClose={() => setIsLoginModalOpen(false)}
-      />
 
       {/* Cart Modal */}
       <CartModal
@@ -491,8 +324,6 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onCategorySelect }) => {
         removeFromCart={removeFromCart}
         clearCart={clearCart}
         getCartTotal={getCartTotal}
-        user={user}
-        onLoginRequired={() => setIsLoginModalOpen(true)}
       />
     </>
   );
