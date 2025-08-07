@@ -15,9 +15,10 @@ interface ProductCardProps {
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [pendingPurchase, setPendingPurchase] = useState(false);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
   const { user, openLoginModal } = useAuth();
-  const { addToCart: addToCartOld } = useCart();
-  const { isFavorite, toggleFavorite, addToCart } = useFavorites();
+  const { addToCart } = useCart();
+  const { isFavorite, toggleFavorite } = useFavorites();
   const navigate = useNavigate();
 
   // Pending purchase kontrol et (kullanıcı giriş yaptığında)
@@ -45,13 +46,22 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     console.log('💳 Ödeme işlemi başlatılıyor...');
 
     try {
+      // Eğer ürünün Shopier linki varsa, direkt kullan
+      if (product.shopierLink) {
+        console.log('🔗 Admin panelinden girilen Shopier linki kullanılıyor:', product.shopierLink);
+        window.location.href = product.shopierLink;
+        return;
+      }
+
+      // Yoksa normal Shopier API kullan
       const shopierProduct = {
         name: product.name,
         price: product.price,
         currency: 'TRY',
         description: product.description,
         image_url: product.image,
-        category: product.category
+        category: product.category,
+        shopierLink: product.shopierLink
       };
 
       console.log('📦 Shopier ürün verisi:', shopierProduct);
@@ -98,8 +108,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     await processPurchase();
   };
 
-  const [isAddingToCart, setIsAddingToCart] = useState(false);
-
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -128,18 +136,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     
     try {
       setIsAddingToCart(true);
-      await addToCart(product.id, 1);
+      await addToCart(product, 1);
       console.log('✅ addToCart fonksiyonu çağrıldı');
-      
-      // Başarı bildirimi
-      const notification = document.createElement('div');
-      notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
-      notification.textContent = '✅ Ürün sepete eklendi!';
-      document.body.appendChild(notification);
-      
-      setTimeout(() => {
-        notification.remove();
-      }, 3000);
       
     } catch (error) {
       console.error('❌ Sepete ekleme hatası:', error);
