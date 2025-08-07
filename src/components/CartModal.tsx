@@ -56,14 +56,12 @@ const CartModal: React.FC<CartModalProps> = ({
     setIsProcessingPayment(true);
 
     try {
-      // Kampanyalı fiyat ile ödeme
-      const finalTotal = campaignData?.campaignApplied ? campaignData.finalTotal : cartTotal;
-      
+      // Shopier'a gönderilecek sepet ürünlerini hazırla
       const shopierCartItems = cartItems.map(item => ({
         product: {
           name: item.product.name,
           price: item.product.price,
-          currency: 'TRY',
+          currency: 'TRY' as const, // Para birimini sabit olarak belirt
           description: item.product.description,
           image_url: item.product.image,
           category: item.product.category
@@ -71,43 +69,31 @@ const CartModal: React.FC<CartModalProps> = ({
         quantity: item.quantity
       }));
 
-      // Eğer kampanya varsa, son ürün olarak indirim kalemi ekle
-      if (campaignData?.campaignApplied && campaignData.discountAmount > 0) {
-        shopierCartItems.push({
-          product: {
-            name: `${campaignData.campaignTitle} - İndirim`,
-            price: -campaignData.discountAmount, // Negatif fiyat
-            currency: 'TRY',
-            description: campaignData.campaignDescription || 'Kampanya indirimi',
-            image_url: '',
-            category: 'unisex'
-          },
-          quantity: 1
-        });
-      }
+      // İndirim bilgilerini hazırla
+      const discountDetails = (campaignData?.campaignApplied && campaignData.discountAmount > 0)
+        ? {
+            discountAmount: campaignData.discountAmount,
+            campaignTitle: campaignData.campaignTitle || 'Kampanya İndirimi'
+          }
+        : undefined;
 
-      const paymentUrl = await ShopierService.createCartPayment(
+      // ShopierService üzerinden ödemeyi başlat
+      // Bu fonksiyon artık bir form submit ettiği için await'e gerek yok ve bir URL dönmüyor.
+      ShopierService.createCartPayment(
         shopierCartItems,
         {
           name: user.name,
           email: user.email,
           phone: user.phone
         },
-        // Kampanya indirimi bilgisi
-        campaignData?.campaignApplied && campaignData.campaignTitle ? {
-          discountAmount: campaignData.discountAmount,
-          campaignTitle: campaignData.campaignTitle
-        } : undefined
+        discountDetails
       );
-
-      console.log('🚀 Ödeme sayfasına yönlendiriliyor:', paymentUrl);
       
-      // Ödeme sayfasına yönlendir (aynı sekmede)
-      window.location.href = paymentUrl;
-      
-      // Sepeti temizle
+      // Form submit edildikten sonra sepeti temizle ve modal'ı kapat
+      // Kullanıcı Shopier'a yönlendirileceği için bu işlemler hemen gerçekleşir.
       clearCart();
       onClose();
+
     } catch (error) {
       console.error('Checkout error:', error);
       alert('Ödeme işlemi başlatılamadı. Lütfen tekrar deneyin.');
