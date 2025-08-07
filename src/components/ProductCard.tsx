@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Product } from '../types';
-import { ShoppingBag, Heart, Star, Package, Plus } from 'lucide-react';
-import { useAuth } from '../hooks/useAuth';
+import { ShoppingBag, Star, Package, Plus, User, Mail, Phone, CreditCard } from 'lucide-react';
 import { useCart } from '../hooks/useCart';
-import { useFavorites } from '../hooks/useFavorites';
 import { ShopierService } from '../services/shopierService';
 import OptimizedImage from './OptimizedImage';
 
@@ -12,32 +10,54 @@ interface ProductCardProps {
   product: Product;
 }
 
+interface CustomerInfo {
+  name: string;
+  email: string;
+  phone: string;
+}
+
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-  const [pendingPurchase, setPendingPurchase] = useState(false);
-  const { user, openLoginModal } = useAuth();
-  const { addToCart: addToCartOld } = useCart();
-  const { isFavorite, toggleFavorite, addToCart } = useFavorites();
+  const [showCustomerForm, setShowCustomerForm] = useState(false);
+  const [customerInfo, setCustomerInfo] = useState<CustomerInfo>({
+    name: '',
+    email: '',
+    phone: ''
+  });
+  const [formErrors, setFormErrors] = useState<Partial<CustomerInfo>>({});
+  const { addToCart } = useCart();
   const navigate = useNavigate();
-
-  // Pending purchase kontrol et (kullanıcı giriş yaptığında)
-  React.useEffect(() => {
-    // Eğer kullanıcı giriş yaptı ve bekleyen bir satın alma varsa
-    if (user && pendingPurchase) {
-      console.log('✅ Kullanıcı giriş yaptı, bekleyen satın alma başlatılıyor...');
-      setPendingPurchase(false);
-      processPurchase();
-    }
-  }, [user, pendingPurchase]);
 
   const handleProductClick = () => {
     navigate(`/product/${product.id}`);
   };
 
+  const validateForm = (): boolean => {
+    const errors: Partial<CustomerInfo> = {};
+    
+    if (!customerInfo.name.trim()) {
+      errors.name = 'Ad soyad gerekli';
+    }
+    
+    if (!customerInfo.email.trim()) {
+      errors.email = 'E-posta gerekli';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerInfo.email)) {
+      errors.email = 'Geçerli bir e-posta adresi girin';
+    }
+    
+    if (!customerInfo.phone.trim()) {
+      errors.phone = 'Telefon numarası gerekli';
+    } else if (!/^[\d\s\-\+\(\)]{10,}$/.test(customerInfo.phone.replace(/\s/g, ''))) {
+      errors.phone = 'Geçerli bir telefon numarası girin';
+    }
+    
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   // Satın alma işlemini gerçekleştir
   const processPurchase = async () => {
-    if (!user) {
-      console.error('❌ processPurchase: User null!');
+    if (!validateForm()) {
       return;
     }
 
@@ -56,17 +76,17 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
       console.log('📦 Shopier ürün verisi:', shopierProduct);
       console.log('👤 Kullanıcı verisi:', {
-        name: user.name,
-        email: user.email,
-        phone: user.phone
+        name: customerInfo.name,
+        email: customerInfo.email,
+        phone: customerInfo.phone
       });
 
       const paymentUrl = await ShopierService.createSingleProductPayment(
         shopierProduct,
         {
-          name: user.name,
-          email: user.email,
-          phone: user.phone
+          name: customerInfo.name,
+          email: customerInfo.email,
+          phone: customerInfo.phone
         }
       );
 
@@ -84,18 +104,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   };
 
   const handleDirectPurchase = async () => {
-    console.log('🛒 Hemen Satın Al butonu tıklandı', { user, product });
-    
-    if (!user) {
-      console.log('❌ Kullanıcı giriş yapmamış, login modal açılıyor');
-      setPendingPurchase(true); // Bekleyen satın alma flag'i
-      openLoginModal();
-      console.log('🔄 Login modal açıldı, kullanıcı giriş yapması bekleniyor...');
-      return;
-    }
-
-    // Kullanıcı varsa direkt satın almayı başlat
-    await processPurchase();
+    console.log('🛒 Hemen Satın Al butonu tıklandı', { product });
+    setShowCustomerForm(true);
   };
 
   const [isAddingToCart, setIsAddingToCart] = useState(false);
@@ -106,11 +116,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     
     if (isAddingToCart) {
       console.log('⏸️ Sepete ekleme işlemi devam ediyor, atlandı');
-      return;
-    }
-
-    if (!user) {
-      openLoginModal();
       return;
     }
     
@@ -153,9 +158,149 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     }
   };
 
+  const handleInputChange = (field: keyof CustomerInfo, value: string) => {
+    setCustomerInfo(prev => ({ ...prev, [field]: value }));
+    // Clear error when user starts typing
+    if (formErrors[field]) {
+      setFormErrors(prev => ({ ...prev, [field]: undefined }));
+    }
+  };
+
   const discountPercentage = product.originalPrice 
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : 0;
+
+  if (showCustomerForm) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col">
+          {/* Header */}
+          <div className="p-6 border-b border-gray-200">
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-serif font-bold text-charcoal-900">
+                Bilgilerinizi Girin
+              </h2>
+              <button
+                onClick={() => setShowCustomerForm(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+
+          {/* Form Content */}
+          <div className="flex-1 overflow-y-auto p-6 space-y-4">
+            <p className="text-gray-600 text-sm mb-6">
+              Ödeme işlemini tamamlamak için lütfen bilgilerinizi girin.
+            </p>
+
+            {/* Name Field */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                <User size={16} className="inline mr-1" />
+                Ad Soyad *
+              </label>
+              <input
+                type="text"
+                value={customerInfo.name}
+                onChange={(e) => handleInputChange('name', e.target.value)}
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 ${
+                  formErrors.name ? 'border-red-300' : 'border-gray-300'
+                }`}
+                placeholder="Adınız ve soyadınız"
+              />
+              {formErrors.name && (
+                <p className="text-red-500 text-xs mt-1">{formErrors.name}</p>
+              )}
+            </div>
+
+            {/* Email Field */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                <Mail size={16} className="inline mr-1" />
+                E-posta *
+              </label>
+              <input
+                type="email"
+                value={customerInfo.email}
+                onChange={(e) => handleInputChange('email', e.target.value)}
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 ${
+                  formErrors.email ? 'border-red-300' : 'border-gray-300'
+                }`}
+                placeholder="ornek@email.com"
+              />
+              {formErrors.email && (
+                <p className="text-red-500 text-xs mt-1">{formErrors.email}</p>
+              )}
+            </div>
+
+            {/* Phone Field */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                <Phone size={16} className="inline mr-1" />
+                Telefon Numarası *
+              </label>
+              <input
+                type="tel"
+                value={customerInfo.phone}
+                onChange={(e) => handleInputChange('phone', e.target.value)}
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 ${
+                  formErrors.phone ? 'border-red-300' : 'border-gray-300'
+                }`}
+                placeholder="0512 345 67 89"
+              />
+              {formErrors.phone && (
+                <p className="text-red-500 text-xs mt-1">{formErrors.phone}</p>
+              )}
+            </div>
+
+            {/* Product Summary */}
+            <div className="bg-gray-50 rounded-lg p-4 mt-6">
+              <h3 className="font-semibold text-gray-900 mb-3">Ürün Bilgisi</h3>
+              <div className="flex items-center gap-3">
+                <img
+                  src={product.image}
+                  alt={product.name}
+                  className="w-16 h-16 rounded-lg object-cover"
+                />
+                <div className="flex-1">
+                  <h4 className="font-medium text-gray-900">{product.name}</h4>
+                  <p className="text-sm text-gray-600">{product.brand} • {product.size}</p>
+                  <p className="text-lg font-bold text-purple-600">₺{product.price}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="p-6 border-t border-gray-200 space-y-3">
+            <button
+              onClick={processPurchase}
+              disabled={isProcessingPayment}
+              className="w-full bg-primary-600 text-white py-3 rounded-lg hover:bg-primary-700 transition-colors font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {isProcessingPayment ? (
+                'İşleniyor...'
+              ) : (
+                <>
+                  <CreditCard size={18} />
+                  ₺{product.price} Öde
+                </>
+              )}
+            </button>
+
+            <button
+              onClick={() => setShowCustomerForm(false)}
+              className="w-full bg-gray-200 text-gray-700 py-2 rounded-lg hover:bg-gray-300 transition-colors text-sm"
+            >
+              Geri Dön
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden border border-gray-100 hover:border-primary-200 transform hover:-translate-y-2">
@@ -193,37 +338,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             </span>
           ) : null}
         </div>
-
-        {/* Favorite Button */}
-        <button
-          onClick={async (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            if (!user) {
-              openLoginModal();
-              return;
-            }
-            
-            try {
-              await toggleFavorite(product.id);
-            } catch (error) {
-              console.error('❌ Favori güncelleme hatası:', error);
-              if (error instanceof Error) {
-                alert(error.message);
-              }
-            }
-          }}
-          className="absolute top-4 right-4 w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white transition-all duration-300 group/heart"
-          title={isFavorite(product.id) ? 'Favorilerden çıkar' : 'Favorilere ekle'}
-        >
-          <Heart 
-            size={18} 
-            className={`transition-all duration-300 group-hover/heart:scale-110 ${
-              isFavorite(product.id) ? 'text-red-500 fill-red-500' : 'text-gray-600'
-            }`}
-          />
-        </button>
 
         {/* Quick Add to Cart */}
         <button
@@ -299,7 +413,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           <span className="text-2xl font-bold text-charcoal-900">
             ₺{product.price}
           </span>
-          {product.originalPrice && (
+          {product.originalPrice && product.originalPrice > product.price && (
             <span className="text-lg text-gray-500 line-through">
               ₺{product.originalPrice}
             </span>
@@ -307,54 +421,21 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         </div>
 
         {/* Action Buttons */}
-        <div className="space-y-2">
+        <div className="flex gap-2">
           <button
             onClick={handleDirectPurchase}
-            disabled={!product.inStock || isProcessingPayment}
-            className={`w-full py-3 px-4 rounded-xl font-medium transition-all duration-300 flex items-center justify-center gap-2 ${
-              !product.inStock
-                ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                : isProcessingPayment
-                  ? 'bg-green-500 text-white'
-                  : 'bg-primary-600 text-white hover:bg-primary-700 hover:shadow-lg transform hover:scale-105'
-            }`}
+            disabled={!product.inStock || (product.stockQuantity || 0) === 0}
+            className="flex-1 bg-gradient-to-r from-primary-600 to-primary-700 text-white py-3 px-4 rounded-lg hover:from-primary-700 hover:to-primary-800 transition-all duration-300 font-medium text-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
           >
-            {isProcessingPayment ? (
-              <>
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                Ödeme sayfasına yönlendiriliyor...
-              </>
+            {!product.inStock || (product.stockQuantity || 0) === 0 ? (
+              'Tükendi'
             ) : (
               <>
-            <ShoppingBag size={18} />
-                {product.inStock ? '💳 Hemen Satın Al' : 'Stokta Yok'}
+                <ShoppingBag size={16} />
+                Hemen Satın Al
               </>
             )}
           </button>
-
-          {product.inStock && (
-            <button
-              onClick={handleAddToCart}
-              disabled={isAddingToCart}
-              className={`w-full py-2 px-4 rounded-xl font-medium border-2 transition-all duration-500 flex items-center justify-center gap-2 ${
-                isAddingToCart
-                  ? 'border-green-500 text-green-600 bg-green-50 scale-105'
-                  : 'border-primary-600 text-primary-600 hover:bg-primary-50 hover:scale-105'
-              }`}
-            >
-              {isAddingToCart ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-green-600 border-t-transparent rounded-full animate-spin" />
-                  Ekleniyor...
-                </>
-              ) : (
-                <>
-              <Plus size={16} />
-              Sepete Ekle
-                </>
-              )}
-            </button>
-          )}
         </div>
       </div>
     </div>

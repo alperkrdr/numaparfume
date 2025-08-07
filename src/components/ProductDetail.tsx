@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Heart, ShoppingBag, Package, Star, Plus, Minus, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, ShoppingBag, Package, Star, Plus, Minus, ChevronLeft, ChevronRight, User, Mail, Phone, CreditCard } from 'lucide-react';
 import { Product } from '../types';
 import { useProducts } from '../hooks/useProducts';
 import { useCart } from '../hooks/useCart';
-import { useAuth } from '../hooks/useAuth';
+
 import { ShopierService } from '../services/shopierService';
 import SEO from './SEO';
 
@@ -13,23 +13,21 @@ const ProductDetail: React.FC = () => {
   const navigate = useNavigate();
   const { products } = useProducts();
   const { addToCart } = useCart();
-  const { user, openLoginModal } = useAuth();
-  
   const [product, setProduct] = useState<Product | null>(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
-  const [isLiked, setIsLiked] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-  const [pendingPurchase, setPendingPurchase] = useState(false);
-
-  // User state değişimini dinle ve pending purchase'ı kontrol et
-  useEffect(() => {
-    if (user && pendingPurchase) {
-      console.log('✅ ProductDetail: Kullanıcı giriş yaptı, bekleyen satın alma başlatılıyor...');
-      setPendingPurchase(false);
-      processPurchase();
-    }
-  }, [user, pendingPurchase]);
+  const [showCustomerForm, setShowCustomerForm] = useState(false);
+  const [customerInfo, setCustomerInfo] = useState({
+    name: '',
+    email: '',
+    phone: ''
+  });
+  const [formErrors, setFormErrors] = useState<{
+    name?: string;
+    email?: string;
+    phone?: string;
+  }>({});
 
   useEffect(() => {
     if (id && products.length > 0) {
@@ -75,9 +73,31 @@ const ProductDetail: React.FC = () => {
     }
   };
 
+  const validateForm = (): boolean => {
+    const errors: typeof formErrors = {};
+    
+    if (!customerInfo.name.trim()) {
+      errors.name = 'Ad soyad gerekli';
+    }
+    
+    if (!customerInfo.email.trim()) {
+      errors.email = 'E-posta gerekli';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerInfo.email)) {
+      errors.email = 'Geçerli bir e-posta adresi girin';
+    }
+    
+    if (!customerInfo.phone.trim()) {
+      errors.phone = 'Telefon numarası gerekli';
+    } else if (!/^[\d\s\-\+\(\)]{10,}$/.test(customerInfo.phone.replace(/\s/g, ''))) {
+      errors.phone = 'Geçerli bir telefon numarası girin';
+    }
+    
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const processPurchase = async () => {
-    if (!user || !product) {
-      console.error('❌ processPurchase: User veya product null!');
+    if (!validateForm() || !product) {
       return;
     }
 
@@ -96,9 +116,9 @@ const ProductDetail: React.FC = () => {
       const paymentUrl = await ShopierService.createSingleProductPayment(
         shopierProduct,
         {
-          name: user.name,
-          email: user.email,
-          phone: user.phone
+          name: customerInfo.name,
+          email: customerInfo.email,
+          phone: customerInfo.phone
         }
       );
       
@@ -112,16 +132,16 @@ const ProductDetail: React.FC = () => {
   };
 
   const handleDirectPurchase = async () => {
-    console.log('🛒 ProductDetail: Hemen Satın Al butonu tıklandı', { user, product });
-    
-    if (!user) {
-      console.log('❌ ProductDetail: Kullanıcı giriş yapmamış, login modal açılıyor');
-      setPendingPurchase(true);
-      openLoginModal();
-      return;
-    }
+    console.log('🛒 ProductDetail: Hemen Satın Al butonu tıklandı', { product });
+    setShowCustomerForm(true);
+  };
 
-    await processPurchase();
+  const handleInputChange = (field: keyof typeof customerInfo, value: string) => {
+    setCustomerInfo(prev => ({ ...prev, [field]: value }));
+    // Clear error when user starts typing
+    if (formErrors[field]) {
+      setFormErrors(prev => ({ ...prev, [field]: undefined }));
+    }
   };
 
   const nextImage = () => {
@@ -240,16 +260,7 @@ const ProductDetail: React.FC = () => {
                 )}
               </div>
 
-              {/* Like Button */}
-              <button
-                onClick={() => setIsLiked(!isLiked)}
-                className="absolute top-4 right-4 w-12 h-12 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white transition-all shadow-lg"
-              >
-                <Heart 
-                  size={20} 
-                  className={`${isLiked ? 'text-red-500 fill-red-500' : 'text-gray-600'}`}
-                />
-              </button>
+
             </div>
 
             {/* Thumbnail Images */}
@@ -418,6 +429,138 @@ const ProductDetail: React.FC = () => {
         </div>
       </div>
     </div>
+    
+    {/* Customer Form Modal */}
+    {showCustomerForm && (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col">
+          {/* Header */}
+          <div className="p-6 border-b border-gray-200">
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-serif font-bold text-charcoal-900">
+                Bilgilerinizi Girin
+              </h2>
+              <button
+                onClick={() => setShowCustomerForm(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+
+          {/* Form Content */}
+          <div className="flex-1 overflow-y-auto p-6 space-y-4">
+            <p className="text-gray-600 text-sm mb-6">
+              Ödeme işlemini tamamlamak için lütfen bilgilerinizi girin.
+            </p>
+
+            {/* Name Field */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                <User size={16} className="inline mr-1" />
+                Ad Soyad *
+              </label>
+              <input
+                type="text"
+                value={customerInfo.name}
+                onChange={(e) => handleInputChange('name', e.target.value)}
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 ${
+                  formErrors.name ? 'border-red-300' : 'border-gray-300'
+                }`}
+                placeholder="Adınız ve soyadınız"
+              />
+              {formErrors.name && (
+                <p className="text-red-500 text-xs mt-1">{formErrors.name}</p>
+              )}
+            </div>
+
+            {/* Email Field */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                <Mail size={16} className="inline mr-1" />
+                E-posta *
+              </label>
+              <input
+                type="email"
+                value={customerInfo.email}
+                onChange={(e) => handleInputChange('email', e.target.value)}
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 ${
+                  formErrors.email ? 'border-red-300' : 'border-gray-300'
+                }`}
+                placeholder="ornek@email.com"
+              />
+              {formErrors.email && (
+                <p className="text-red-500 text-xs mt-1">{formErrors.email}</p>
+              )}
+            </div>
+
+            {/* Phone Field */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                <Phone size={16} className="inline mr-1" />
+                Telefon Numarası *
+              </label>
+              <input
+                type="tel"
+                value={customerInfo.phone}
+                onChange={(e) => handleInputChange('phone', e.target.value)}
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 ${
+                  formErrors.phone ? 'border-red-300' : 'border-gray-300'
+                }`}
+                placeholder="0512 345 67 89"
+              />
+              {formErrors.phone && (
+                <p className="text-red-500 text-xs mt-1">{formErrors.phone}</p>
+              )}
+            </div>
+
+            {/* Product Summary */}
+            <div className="bg-gray-50 rounded-lg p-4 mt-6">
+              <h3 className="font-semibold text-gray-900 mb-3">Sipariş Özeti</h3>
+              <div className="flex items-center gap-3">
+                <img
+                  src={product.image}
+                  alt={product.name}
+                  className="w-16 h-16 rounded-lg object-cover"
+                />
+                <div className="flex-1">
+                  <h4 className="font-medium text-gray-900">{product.name}</h4>
+                  <p className="text-sm text-gray-600">{product.brand} • {product.size}</p>
+                  <p className="text-sm text-gray-600">Miktar: {quantity} adet</p>
+                  <p className="text-lg font-bold text-purple-600">₺{(product.price * quantity).toLocaleString()}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="p-6 border-t border-gray-200 space-y-3">
+            <button
+              onClick={processPurchase}
+              disabled={isProcessingPayment}
+              className="w-full bg-primary-600 text-white py-3 rounded-lg hover:bg-primary-700 transition-colors font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {isProcessingPayment ? (
+                'İşleniyor...'
+              ) : (
+                <>
+                  <CreditCard size={18} />
+                  ₺{(product.price * quantity).toLocaleString()} Öde
+                </>
+              )}
+            </button>
+
+            <button
+              onClick={() => setShowCustomerForm(false)}
+              className="w-full bg-gray-200 text-gray-700 py-2 rounded-lg hover:bg-gray-300 transition-colors text-sm"
+            >
+              Geri Dön
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
     </>
   );
 };
