@@ -5,7 +5,6 @@ import { ShoppingBag, Heart, Star, Package, Plus } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useCart } from '../hooks/useCart';
 import { useFavorites } from '../hooks/useFavorites';
-import { ShopierService } from '../services/shopierService';
 import OptimizedImage from './OptimizedImage';
 
 interface ProductCardProps {
@@ -16,8 +15,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [pendingPurchase, setPendingPurchase] = useState(false);
   const { user, openLoginModal } = useAuth();
-  const { addToCart: addToCartOld } = useCart();
-  const { isFavorite, toggleFavorite, addToCart } = useFavorites();
+  const { addToCart } = useCart();
+  const { isFavorite, toggleFavorite } = useFavorites();
   const navigate = useNavigate();
 
   // Pending purchase kontrol et (kullanıcı giriş yaptığında)
@@ -34,7 +33,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     navigate(`/product/${product.id}`);
   };
 
-  // Satın alma işlemini gerçekleştir
+  // Satın alma işlemini gerçekleştir - Shopier linkini kullan
   const processPurchase = async () => {
     if (!user) {
       console.error('❌ processPurchase: User null!');
@@ -45,36 +44,14 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     console.log('💳 Ödeme işlemi başlatılıyor...');
 
     try {
-      const shopierProduct = {
-        name: product.name,
-        price: product.price,
-        currency: 'TRY',
-        description: product.description,
-        image_url: product.image,
-        category: product.category
-      };
-
-      console.log('📦 Shopier ürün verisi:', shopierProduct);
-      console.log('👤 Kullanıcı verisi:', {
-        name: user.name,
-        email: user.email,
-        phone: user.phone
-      });
-
-      const paymentUrl = await ShopierService.createSingleProductPayment(
-        shopierProduct,
-        {
-          name: user.name,
-          email: user.email,
-          phone: user.phone
-        }
-      );
-
-      console.log('🔗 Ödeme URL\'si oluşturuldu:', paymentUrl);
-      
-      // Ödeme sayfasına yönlendir (aynı sayfada)
-      console.log('🔄 Ödeme sayfasına yönlendiriliyor...');
-      window.location.href = paymentUrl;
+      // Admin panelinden girilen Shopier linkini kullan
+      if (product.shopierLink) {
+        console.log('🔗 Shopier linki kullanılıyor:', product.shopierLink);
+        window.location.href = product.shopierLink;
+      } else {
+        console.error('❌ Shopier linki bulunamadı');
+        alert('Bu ürün için satın alma linki bulunmuyor. Lütfen admin panelinden link ekleyin.');
+      }
     } catch (error) {
       console.error('❌ Direkt satın alma hatası:', error);
       alert('Ödeme işlemi başlatılamadı. Lütfen tekrar deneyin.');
@@ -128,18 +105,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     
     try {
       setIsAddingToCart(true);
-      await addToCart(product.id, 1);
+      addToCart(product, 1);
       console.log('✅ addToCart fonksiyonu çağrıldı');
-      
-      // Başarı bildirimi
-      const notification = document.createElement('div');
-      notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
-      notification.textContent = '✅ Ürün sepete eklendi!';
-      document.body.appendChild(notification);
-      
-      setTimeout(() => {
-        notification.remove();
-      }, 3000);
       
     } catch (error) {
       console.error('❌ Sepete ekleme hatası:', error);
