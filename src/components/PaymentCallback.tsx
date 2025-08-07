@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { CheckCircle, XCircle, Clock, ArrowRight } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, ArrowRight, Shield } from 'lucide-react';
 import { ShopierService } from '../services/shopierService';
 
 const PaymentCallback: React.FC = () => {
@@ -8,6 +8,7 @@ const PaymentCallback: React.FC = () => {
   const navigate = useNavigate();
   const [status, setStatus] = useState<'loading' | 'success' | 'failed' | 'pending'>('loading');
   const [orderInfo, setOrderInfo] = useState<any>(null);
+  const [verificationStatus, setVerificationStatus] = useState<'pending' | 'verified' | 'failed'>('pending');
 
   useEffect(() => {
     const processCallback = async () => {
@@ -23,6 +24,14 @@ const PaymentCallback: React.FC = () => {
         const random_nr = searchParams.get('random_nr');
         const signature = searchParams.get('signature');
 
+        console.log('🔄 Payment callback işleniyor:', {
+          platform_order_id,
+          payment_status,
+          total_order_value,
+          currency,
+          signature
+        });
+
         // Sipariş bilgilerini kaydet
         setOrderInfo({
           orderId: platform_order_id,
@@ -31,6 +40,30 @@ const PaymentCallback: React.FC = () => {
           installment: installment,
           testMode: test_mode === '1'
         });
+
+        // İmza doğrulaması - Güvenlik için kritik
+        if (signature && random_nr && platform_order_id && total_order_value && currency) {
+          const callbackData = {
+            platform_order_id,
+            payment_status,
+            total_order_value,
+            currency,
+            random_nr,
+            signature
+          };
+
+          const isValid = ShopierService.verifyCallback(callbackData);
+          setVerificationStatus(isValid ? 'verified' : 'failed');
+
+          if (!isValid) {
+            console.error('❌ Callback imza doğrulaması başarısız!');
+            setStatus('failed');
+            return;
+          }
+        } else {
+          console.warn('⚠️ Callback doğrulama için gerekli parametreler eksik');
+          setVerificationStatus('failed');
+        }
 
         // Payment status'e göre durumu belirle
         switch (payment_status) {
@@ -47,24 +80,22 @@ const PaymentCallback: React.FC = () => {
             setStatus('failed');
         }
 
-        // İmza doğrulaması (opsiyonel)
-        if (signature && random_nr) {
-          const isValid = ShopierService.verifyCallback({
-            platform_order_id,
-            payment_status,
-            total_order_value,
-            currency,
-            random_nr,
-            signature
-          });
-          
-          if (!isValid) {
-            console.warn('Payment callback signature verification failed');
+        // Başarılı ödemede sipariş bilgilerini kaydet
+        if (payment_status === '1' && platform_order_id) {
+          try {
+            // Burada sipariş bilgilerini veritabanına kaydedebilirsiniz
+            console.log('✅ Başarılı ödeme kaydedildi:', platform_order_id);
+            
+            // LocalStorage'dan sepeti temizle
+            localStorage.removeItem('cart');
+            
+          } catch (error) {
+            console.error('❌ Sipariş kaydetme hatası:', error);
           }
         }
 
       } catch (error) {
-        console.error('Payment callback processing error:', error);
+        console.error('❌ Payment callback processing error:', error);
         setStatus('failed');
       }
     };
@@ -96,6 +127,23 @@ const PaymentCallback: React.FC = () => {
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="max-w-md w-full">
         <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
+          {/* Verification Status */}
+          {verificationStatus !== 'pending' && (
+            <div className="mb-4 p-3 rounded-lg flex items-center justify-center gap-2">
+              {verificationStatus === 'verified' ? (
+                <div className="flex items-center gap-2 text-green-600">
+                  <Shield size={16} />
+                  <span className="text-sm font-medium">Güvenli Ödeme</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 text-red-600">
+                  <Shield size={16} />
+                  <span className="text-sm font-medium">Doğrulama Başarısız</span>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Icon */}
           <div className="mb-6">
             {status === 'success' && (
