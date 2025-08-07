@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Plus, Minus, Trash2, ShoppingBag, CreditCard, Tag, Gift } from 'lucide-react';
+import { X, Plus, Minus, Trash2, ShoppingBag, CreditCard, Tag, Gift, MapPin } from 'lucide-react';
 import { CartItem } from '../hooks/useCart';
 import { User } from '../hooks/useAuth';
 import { ShopierService } from '../services/shopierService';
@@ -18,6 +18,13 @@ interface CartModalProps {
   onLoginRequired: () => void;
 }
 
+interface AddressForm {
+  address: string;
+  city: string;
+  district: string;
+  postalCode: string;
+}
+
 const CartModal: React.FC<CartModalProps> = ({
   isOpen,
   onClose,
@@ -30,6 +37,13 @@ const CartModal: React.FC<CartModalProps> = ({
   onLoginRequired
 }) => {
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [showAddressForm, setShowAddressForm] = useState(false);
+  const [addressForm, setAddressForm] = useState<AddressForm>({
+    address: '',
+    city: '',
+    district: '',
+    postalCode: ''
+  });
   const { settings } = useSettings();
 
   // Kampanya hesaplama
@@ -50,6 +64,12 @@ const CartModal: React.FC<CartModalProps> = ({
 
     if (cartItems.length === 0) {
       alert('Sepetiniz boş');
+      return;
+    }
+
+    // Adres bilgisi kontrolü
+    if (!addressForm.address || !addressForm.city || !addressForm.district) {
+      setShowAddressForm(true);
       return;
     }
 
@@ -91,7 +111,8 @@ const CartModal: React.FC<CartModalProps> = ({
         {
           name: user.name,
           email: user.email,
-          phone: user.phone
+          phone: user.phone,
+          address: `${addressForm.address}, ${addressForm.district}, ${addressForm.city} ${addressForm.postalCode}`
         },
         // Kampanya indirimi bilgisi
         campaignData?.campaignApplied && campaignData.campaignTitle ? {
@@ -252,6 +273,75 @@ const CartModal: React.FC<CartModalProps> = ({
             </div>
 
             <div className="space-y-3">
+              {/* Adres Formu */}
+              {showAddressForm && (
+                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                  <div className="flex items-center gap-2 mb-3">
+                    <MapPin size={16} className="text-primary-600" />
+                    <h3 className="font-semibold text-gray-900">Teslimat Adresi</h3>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Adres *
+                      </label>
+                      <textarea
+                        value={addressForm.address}
+                        onChange={(e) => setAddressForm(prev => ({ ...prev, address: e.target.value }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                        placeholder="Sokak, mahalle, bina no..."
+                        rows={2}
+                        required
+                      />
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          İlçe *
+                        </label>
+                        <input
+                          type="text"
+                          value={addressForm.district}
+                          onChange={(e) => setAddressForm(prev => ({ ...prev, district: e.target.value }))}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                          placeholder="İlçe"
+                          required
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Şehir *
+                        </label>
+                        <input
+                          type="text"
+                          value={addressForm.city}
+                          onChange={(e) => setAddressForm(prev => ({ ...prev, city: e.target.value }))}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                          placeholder="Şehir"
+                          required
+                        />
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Posta Kodu
+                      </label>
+                      <input
+                        type="text"
+                        value={addressForm.postalCode}
+                        onChange={(e) => setAddressForm(prev => ({ ...prev, postalCode: e.target.value }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                        placeholder="Posta kodu"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <button
                 onClick={handleCheckout}
                 disabled={isProcessingPayment}
@@ -259,13 +349,18 @@ const CartModal: React.FC<CartModalProps> = ({
               >
                 {isProcessingPayment ? (
                   'İşleniyor...'
-                ) : (
+                ) : showAddressForm ? (
                   <>
                     <CreditCard size={18} />
                     {campaignData?.campaignApplied ? 
                       `₺${campaignData.finalTotal.toLocaleString()} Öde` : 
                       'Ödemeye Geç'
                     }
+                  </>
+                ) : (
+                  <>
+                    <MapPin size={18} />
+                    Adres Bilgilerini Gir
                   </>
                 )}
               </button>

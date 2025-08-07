@@ -5,7 +5,6 @@ import { Product } from '../types';
 import { useProducts } from '../hooks/useProducts';
 import { useCart } from '../hooks/useCart';
 import { useAuth } from '../hooks/useAuth';
-import { ShopierService } from '../services/shopierService';
 import SEO from './SEO';
 
 const ProductDetail: React.FC = () => {
@@ -84,25 +83,14 @@ const ProductDetail: React.FC = () => {
     setIsProcessingPayment(true);
 
     try {
-      const shopierProduct = {
-        name: product.name,
-        price: product.price * quantity,
-        currency: 'TRY',
-        description: product.description,
-        image_url: product.image,
-        category: product.category
-      };
-
-      const paymentUrl = await ShopierService.createSingleProductPayment(
-        shopierProduct,
-        {
-          name: user.name,
-          email: user.email,
-          phone: user.phone
-        }
-      );
-      
-      window.location.href = paymentUrl;
+      // Admin panelinden girilen Shopier linkini kullan
+      if (product.shopierLink) {
+        console.log('🔗 Shopier linki kullanılıyor:', product.shopierLink);
+        window.location.href = product.shopierLink;
+      } else {
+        console.error('❌ Shopier linki bulunamadı');
+        alert('Bu ürün için satın alma linki bulunmuyor. Lütfen admin panelinden link ekleyin.');
+      }
     } catch (error) {
       console.error('Direkt satın alma hatası:', error);
       alert('Ödeme işlemi başlatılamadı. Lütfen tekrar deneyin.');
