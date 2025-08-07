@@ -272,64 +272,6 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onCategorySelect }) => {
                 </div>
               </form>
 
-                {/* User Section - Mobile */}
-                {user ? (
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <div className="flex items-center space-x-3 mb-3">
-                      <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                        <User className="w-5 h-5 text-purple-600" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-gray-900">
-                          {user.displayName || user.email.split('@')[0]}
-                        </p>
-                        <p className="text-sm text-gray-500">{user.email}</p>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Link
-                        to="/favorites"
-                        className="flex items-center py-2 px-3 text-gray-700 hover:bg-white rounded-lg transition-colors"
-                        onClick={() => setIsMenuOpen(false)}
-                      >
-                        <Heart className="w-4 h-4 mr-3" />
-                        Favorilerim ({favoriteCount})
-                      </Link>
-                      
-                      {isAdmin && (
-                <Link
-                          to="/admin"
-                          className="flex items-center py-2 px-3 text-gray-700 hover:bg-white rounded-lg transition-colors"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                          <Settings className="w-4 h-4 mr-3" />
-                          Admin Panel
-                </Link>
-                      )}
-                      
-                      <button
-                        onClick={handleLogout}
-                        className="flex items-center w-full py-2 px-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                      >
-                        <LogOut className="w-4 h-4 mr-3" />
-                        Çıkış Yap
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => {
-                      setIsLoginModalOpen(true);
-                      setIsMenuOpen(false);
-                    }}
-                    className="w-full flex items-center justify-center py-3 px-4 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
-                  >
-                    <User className="w-5 h-5 mr-2" />
-                    Giriş Yap / Kaydol
-                  </button>
-                )}
-
                 {/* Mobile Navigation */}
                 <nav className="space-y-1">
                   <Link
@@ -342,13 +284,13 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onCategorySelect }) => {
                   </Link>
                   
                   {categories.map((category) => (
-                <button 
+                    <button
                       key={category.value}
                       onClick={() => handleCategoryClick(category)}
                       className="flex items-center w-full py-3 px-4 text-gray-700 hover:text-purple-600 hover:bg-gray-50 rounded-lg transition-colors text-left"
-                >
+                    >
                       {category.name}
-                </button>
+                    </button>
                   ))}
                   
                   <Link
@@ -366,18 +308,12 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onCategorySelect }) => {
                   >
                     Öne Çıkanlar
                   </Link>
-              </nav>
+                </nav>
               </div>
             </div>
-            </div>
-          )}
+          </div>
+        )}
       </header>
-
-      {/* Login Modal */}
-      <LoginModal
-        isOpen={isLoginModalOpen}
-        onClose={() => setIsLoginModalOpen(false)}
-      />
 
       {/* Cart Modal */}
       <CartModal
@@ -388,8 +324,6 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onCategorySelect }) => {
         removeFromCart={removeFromCart}
         clearCart={clearCart}
         getCartTotal={getCartTotal}
-        user={user}
-        onLoginRequired={() => setIsLoginModalOpen(true)}
       />
     </>
   );
