@@ -100,10 +100,10 @@ const CartModal: React.FC<CartModalProps> = ({
         } : undefined
       );
 
-      console.log('🚀 Ödeme sayfasına yönlendiriliyor:', paymentUrl);
+      console.log('🚀 Shopier ödeme formu gönderiliyor...');
       
-      // Ödeme sayfasına yönlendir (aynı sekmede)
-      window.location.href = paymentUrl;
+      // Form otomatik olarak submit edildiği için yönlendirme gerekmez
+      // ShopierService.createCartPayment zaten formu submit ediyor
       
       // Sepeti temizle
       clearCart();

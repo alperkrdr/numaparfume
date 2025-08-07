@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shopier Entegrasyon Testi</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .debug {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Shopier Entegrasyon Testi</h1>
+        <p>Bu sayfa Shopier entegrasyonunu test etmek için kullanılır.</p>
+
+        <form id="shopierTestForm">
+            <div class="form-group">
+                <label for="productName">Ürün Adı:</label>
+                <input type="text" id="productName" value="Test Ürün" required>
+            </div>
+
+            <div class="form-group">
+                <label for="totalAmount">Toplam Tutar (TL):</label>
+                <input type="number" id="totalAmount" value="100.00" step="0.01" required>
+            </div>
+
+            <div class="form-group">
+                <label for="buyerName">Müşteri Adı:</label>
+                <input type="text" id="buyerName" value="Ahmet Yılmaz" required>
+            </div>
+
+            <div class="form-group">
+                <label for="buyerEmail">E-posta:</label>
+                <input type="email" id="buyerEmail" value="test@example.com" required>
+            </div>
+
+            <div class="form-group">
+                <label for="buyerPhone">Telefon:</label>
+                <input type="tel" id="buyerPhone" value="05001234567" required>
+            </div>
+
+            <button type="submit">Shopier ile Ödeme Yap</button>
+        </form>
+
+        <div id="debugOutput" class="debug" style="display: none;"></div>
+    </div>
+
+    <script>
+        // Shopier API bilgileri
+        const API_KEY = '107a7821174596da16176ffe2138b709';
+        const API_SECRET = '952d2f8f485d0d74391343c1606aa4cb';
+        const WEBSITE_INDEX = 1;
+        const PAYMENT_URL = 'https://www.shopier.com/ShowProduct/api_pay4.php';
+
+        document.getElementById('shopierTestForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const productName = document.getElementById('productName').value;
+            const totalAmount = document.getElementById('totalAmount').value;
+            const buyerName = document.getElementById('buyerName').value;
+            const buyerEmail = document.getElementById('buyerEmail').value;
+            const buyerPhone = document.getElementById('buyerPhone').value;
+
+            // Müşteri adını parçala
+            const [firstName, ...surnameParts] = buyerName.split(' ');
+            const lastName = surnameParts.join(' ') || 'Müşteri';
+
+            // Benzersiz sipariş kodu
+            const orderId = `TEST_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+            // Ödeme verilerini hazırla
+            const paymentData = {
+                API_key: API_KEY,
+                website_index: WEBSITE_INDEX,
+                platform_order_id: orderId,
+                product_name: productName,
+                buyer_name: firstName,
+                buyer_surname: lastName,
+                buyer_email: buyerEmail,
+                buyer_phone: buyerPhone,
+                billing_address: 'Test Adres',
+                billing_city: 'İstanbul',
+                billing_country: 'Türkiye',
+                billing_postcode: '34000',
+                total_order_value: totalAmount,
+                currency: 'TRY',
+                callback_url: window.location.origin + '/payment-callback',
+                payment_channel: 'web',
+                is_installment: 0,
+                signature: '' // Aşağıda hesaplanacak
+            };
+
+            // İmza oluştur
+            const signatureString = Object.values(paymentData).join('');
+            const signature = CryptoJS.HmacSHA256(signatureString, API_SECRET).toString();
+            paymentData.signature = signature;
+
+            // Debug bilgilerini göster
+            const debugOutput = document.getElementById('debugOutput');
+            debugOutput.style.display = 'block';
+            debugOutput.textContent = `🔐 Shopier Ödeme Verileri:
+            
+Sipariş ID: ${orderId}
+Ürün: ${productName}
+Tutar: ${totalAmount} TL
+Müşteri: ${buyerName}
+E-posta: ${buyerEmail}
+Telefon: ${buyerPhone}
+
+İmza Bilgileri:
+Signature String: ${signatureString}
+Generated Signature: ${signature}
+
+Form Data:
+${JSON.stringify(paymentData, null, 2)}
+
+Form gönderiliyor...`;
+
+            // Form oluştur ve submit et
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = PAYMENT_URL;
+            form.id = 'shopier_form';
+            form.style.display = 'none';
+
+            Object.entries(paymentData).forEach(([key, value]) => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = key;
+                input.value = String(value);
+                form.appendChild(input);
+            });
+
+            document.body.appendChild(form);
+            form.submit();
+        });
+    </script>
+</body>
+</html>
