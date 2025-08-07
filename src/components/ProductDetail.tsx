@@ -48,8 +48,8 @@ const ProductDetail: React.FC = () => {
   };
 
   const handleDirectPurchase = () => {
-    if (product && product.externalLink) {
-      window.location.href = product.externalLink;
+    if (product && product.shopierLink) {
+      window.location.href = product.shopierLink;
     } else {
       alert('Bu ürün için direkt satın alma linki bulunmuyor.');
     }

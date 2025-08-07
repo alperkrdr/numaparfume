@@ -15,7 +15,6 @@ export interface Product {
   featured: boolean;
   collection?: boolean; // Koleksiyonu Keşfet kısmında gösterilecek mi?
   shopierLink: string;
-  externalLink?: string; // "Hemen Satın Al" için dış link
   notes?: {
     top?: string[];
     middle?: string[];

@@ -22,8 +22,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   };
 
   const handleDirectPurchase = () => {
-    if (product.externalLink) {
-      window.location.href = product.externalLink;
+    if (product.shopierLink) {
+      window.location.href = product.shopierLink;
     } else {
       // Fallback or error message if no link is provided
       alert('Bu ürün için direkt satın alma linki bulunmuyor.');
