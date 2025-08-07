@@ -4,32 +4,20 @@ import { ArrowLeft, Heart, ShoppingBag, Package, Star, Plus, Minus, ChevronLeft,
 import { Product } from '../types';
 import { useProducts } from '../hooks/useProducts';
 import { useCart } from '../hooks/useCart';
-import { useAuth } from '../hooks/useAuth';
-import { ShopierService } from '../services/shopierService';
 import SEO from './SEO';
+import DirectBuyModal from './DirectBuyModal';
 
 const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { products } = useProducts();
   const { addToCart } = useCart();
-  const { user, openLoginModal } = useAuth();
   
   const [product, setProduct] = useState<Product | null>(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [isLiked, setIsLiked] = useState(false);
-  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-  const [pendingPurchase, setPendingPurchase] = useState(false);
-
-  // User state değişimini dinle ve pending purchase'ı kontrol et
-  useEffect(() => {
-    if (user && pendingPurchase) {
-      console.log('✅ ProductDetail: Kullanıcı giriş yaptı, bekleyen satın alma başlatılıyor...');
-      setPendingPurchase(false);
-      processPurchase();
-    }
-  }, [user, pendingPurchase]);
+  const [isDirectBuyModalOpen, setIsDirectBuyModalOpen] = useState(false);
 
   useEffect(() => {
     if (id && products.length > 0) {
@@ -55,73 +43,15 @@ const ProductDetail: React.FC = () => {
     : 0;
 
   const handleAddToCart = () => {
-    try {
-      addToCart(product, quantity);
-      
-      // Başarı bildirimi
-      const notification = document.createElement('div');
-      notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
-      notification.textContent = `${quantity} adet ürün sepete eklendi!`;
-      document.body.appendChild(notification);
-      
-      setTimeout(() => {
-        if (document.body.contains(notification)) {
-          document.body.removeChild(notification);
-        }
-      }, 3000);
-    } catch (error) {
-      console.error('Sepete ekleme hatası:', error);
-      alert('Ürün sepete eklenirken bir hata oluştu.');
-    }
+    if (!product) return;
+    addToCart(product, quantity);
+    // Optional: Show a notification
+    alert(`${quantity} adet ${product.name} sepete eklendi!`);
   };
 
-  const processPurchase = async () => {
-    if (!user || !product) {
-      console.error('❌ processPurchase: User veya product null!');
-      return;
-    }
-
-    setIsProcessingPayment(true);
-
-    try {
-      const shopierProduct = {
-        name: product.name,
-        price: product.price * quantity,
-        currency: 'TRY',
-        description: product.description,
-        image_url: product.image,
-        category: product.category
-      };
-
-      const paymentUrl = await ShopierService.createSingleProductPayment(
-        shopierProduct,
-        {
-          name: user.name,
-          email: user.email,
-          phone: user.phone
-        }
-      );
-      
-      window.location.href = paymentUrl;
-    } catch (error) {
-      console.error('Direkt satın alma hatası:', error);
-      alert('Ödeme işlemi başlatılamadı. Lütfen tekrar deneyin.');
-    } finally {
-      setIsProcessingPayment(false);
-    }
-  };
-
-  const handleDirectPurchase = async () => {
-    console.log('🛒 ProductDetail: Hemen Satın Al butonu tıklandı', { user, product });
-    
-    if (!user) {
-      console.log('❌ ProductDetail: Kullanıcı giriş yapmamış, login modal açılıyor');
-      setPendingPurchase(true);
-      openLoginModal();
-      return;
-    }
-
-    await processPurchase();
+  const handleDirectPurchase = () => {
+    if (!product) return;
+    setIsDirectBuyModalOpen(true);
   };
 
   const nextImage = () => {
@@ -398,10 +328,10 @@ const ProductDetail: React.FC = () => {
 
                 <button
                   onClick={handleDirectPurchase}
-                  disabled={!product.inStock || isProcessingPayment}
+                  disabled={!product.inStock}
                   className="w-full bg-green-600 text-white py-4 rounded-lg font-medium hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isProcessingPayment ? 'İşleniyor...' : 'Hemen Satın Al'}
+                  Hemen Satın Al
                 </button>
               </div>
 
@@ -417,6 +347,11 @@ const ProductDetail: React.FC = () => {
           </div>
         </div>
       </div>
+      <DirectBuyModal
+        isOpen={isDirectBuyModalOpen}
+        onClose={() => setIsDirectBuyModalOpen(false)}
+        product={product}
+      />
     </div>
     </>
   );
