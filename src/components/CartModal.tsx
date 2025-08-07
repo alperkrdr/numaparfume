@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Plus, Minus, Trash2, ShoppingBag, CreditCard, Tag, Gift, User, Phone, Mail } from 'lucide-react';
+import { X, Plus, Minus, Trash2, ShoppingBag, CreditCard, Tag, Gift, User, Phone, Mail, Home } from 'lucide-react';
 import { CartItem } from '../hooks/useCart';
 import { ShopierService } from '../services/shopierService';
 import { CampaignService } from '../services/campaignService';
@@ -26,7 +26,7 @@ const CartModal: React.FC<CartModalProps> = ({
 }) => {
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [showAddressForm, setShowAddressForm] = useState(false);
-  const [buyerInfo, setBuyerInfo] = useState({ name: '', email: '', phone: '' });
+  const [buyerInfo, setBuyerInfo] = useState({ name: '', email: '', phone: '', address: '' });
   const { settings } = useSettings();
 
   useEffect(() => {
@@ -53,14 +53,14 @@ const CartModal: React.FC<CartModalProps> = ({
     setShowAddressForm(true);
   };
 
-  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setBuyerInfo(prev => ({ ...prev, [name]: value }));
   };
 
   const handleFinalSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!buyerInfo.name || !buyerInfo.email || !buyerInfo.phone) {
+    if (!buyerInfo.name || !buyerInfo.email || !buyerInfo.phone || !buyerInfo.address) {
       alert('Lütfen tüm alanları doldurun.');
       return;
     }
@@ -92,7 +92,8 @@ const CartModal: React.FC<CartModalProps> = ({
         {
           name: buyerInfo.name,
           email: buyerInfo.email,
-          phone: buyerInfo.phone
+          phone: buyerInfo.phone,
+          address: buyerInfo.address,
         },
         discountDetails
       );
@@ -199,6 +200,10 @@ const CartModal: React.FC<CartModalProps> = ({
         <div className="relative">
           <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
           <input type="tel" name="phone" value={buyerInfo.phone} onChange={handleFormChange} placeholder="Telefon Numarası" required className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500" />
+        </div>
+        <div className="relative">
+          <Home className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+          <textarea name="address" value={buyerInfo.address} onChange={handleFormChange} placeholder="Teslimat Adresi" required rows={3} className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500 resize-none" />
         </div>
         <div className="space-y-3 pt-2">
           <button type="submit" disabled={isProcessingPayment} className="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition-colors font-medium disabled:opacity-50 flex items-center justify-center gap-2">

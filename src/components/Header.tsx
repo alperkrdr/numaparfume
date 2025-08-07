@@ -24,10 +24,12 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onCategorySelect }) => {
     removeFromCart,
     clearCart,
     getCartTotal,
+    getCartItemCount,
   } = useCart();
   
-  const { cartCount, favorites } = useFavorites();
+  const { favorites } = useFavorites();
   const favoriteCount = favorites.length;
+  const cartCount = getCartItemCount();
   const location = useLocation();
   const navigate = useNavigate();
 

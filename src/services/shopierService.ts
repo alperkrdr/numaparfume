@@ -20,6 +20,7 @@ interface BuyerInfo {
   name: string;
   email: string;
   phone?: string;
+  address?: string;
 }
 
 interface DiscountInfo {
@@ -120,11 +121,11 @@ export class ShopierService {
       buyer_phone: buyerInfo.phone || config.DEFAULT_BUYER.phone,
       buyer_account_age: config.DEFAULT_BUYER.account_age,
       buyer_id_nr: config.DEFAULT_BUYER.id_nr,
-      billing_address: config.DEFAULT_BUYER.billing_address,
+      billing_address: buyerInfo.address || config.DEFAULT_BUYER.billing_address,
       billing_city: config.DEFAULT_BUYER.billing_city,
       billing_country: config.DEFAULT_BUYER.billing_country,
       billing_postcode: config.DEFAULT_BUYER.billing_postcode,
-      shipping_address: config.DEFAULT_BUYER.shipping_address,
+      shipping_address: buyerInfo.address || config.DEFAULT_BUYER.shipping_address,
       shipping_city: config.DEFAULT_BUYER.shipping_city,
       shipping_country: config.DEFAULT_BUYER.shipping_country,
       shipping_postcode: config.DEFAULT_BUYER.shipping_postcode,
