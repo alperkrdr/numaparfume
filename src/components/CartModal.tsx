@@ -204,16 +204,16 @@ const CartModal: React.FC<CartModalProps> = ({
           </div>
         )}
       </div>
-    </div>
 
-    {/* Payment Form */}
-    <PaymentForm
-      isOpen={showPaymentForm}
-      onClose={() => setShowPaymentForm(false)}
-      cartItems={cartItems}
-      getCartTotal={getCartTotal}
-      clearCart={clearCart}
-    />
+      {/* Payment Form */}
+      <PaymentForm
+        isOpen={showPaymentForm}
+        onClose={() => setShowPaymentForm(false)}
+        cartItems={cartItems}
+        getCartTotal={getCartTotal}
+        clearCart={clearCart}
+      />
+    </div>
   );
 };
 

@@ -67,12 +67,6 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onCategorySelect }) => {
     }
   };
 
-  const handleCartClick = () => {
-    setIsCartOpen(true);
-  };
-
-
-
   if (!settings) {
     return (
       <header className="bg-white shadow-lg sticky top-0 z-40">
