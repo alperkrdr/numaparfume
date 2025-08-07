@@ -81,9 +81,25 @@ export class ShopierService {
     ? `${window.location.protocol}//${window.location.host}`
     : 'https://numaparfume.com';
   
-  // Test modunu aktif etmek için değiştirin
-  private static readonly TEST_MODE = true;
+  // Production modu - gerçek ödeme için true yapın
+  private static readonly TEST_MODE = false;
   private static readonly DEBUG_MODE = true;
+
+  /**
+   * Sepet toplam tutarını hesapla (kampanya indirimleri dahil)
+   */
+  private static calculateCartTotal(
+    cartItems: Array<{ product: ShopierProduct; quantity: number; }>,
+    discountInfo?: { discountAmount: number; campaignTitle: string; }
+  ): number {
+    const subtotal = cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+    
+    if (discountInfo && discountInfo.discountAmount > 0) {
+      return Math.max(0, subtotal - discountInfo.discountAmount);
+    }
+    
+    return subtotal;
+  }
 
   /**
    * Modern Shopier API kullanarak ödeme işlemi başlatır
@@ -94,6 +110,10 @@ export class ShopierService {
       name: string;
       email: string;
       phone?: string;
+    },
+    discountInfo?: {
+      discountAmount: number;
+      campaignTitle: string;
     }
   ): Promise<string> {
     try {
@@ -101,12 +121,20 @@ export class ShopierService {
         console.log('🚀 Modern Shopier API çağrısı başlatılıyor...');
         console.log('Products:', products);
         console.log('Buyer:', buyerInfo);
+        console.log('Discount:', discountInfo);
       }
 
       const orderId = `NUMA_${Date.now()}`;
       const [name, ...surnameParts] = buyerInfo.name.split(' ');
       const surname = surnameParts.join(' ') || 'Müşteri';
       
+      // Toplam tutarı hesapla
+      const totalAmount = this.calculateCartTotal(products, discountInfo);
+      
+      if (this.DEBUG_MODE) {
+        console.log('💰 Hesaplanan toplam tutar:', totalAmount);
+      }
+
       const paymentRequest: ShopierPaymentRequest = {
         api_key: this.API_KEY,
         api_secret: this.API_SECRET,
@@ -136,8 +164,7 @@ export class ShopierService {
 
       if (this.TEST_MODE) {
         // Test modunda direkt ödeme formunu kullan
-        const totalAmount = products.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
-        return this.createDirectPaymentForm(products[0].product, buyerInfo, totalAmount);
+        return this.createDirectPaymentForm(products[0].product, buyerInfo, totalAmount, discountInfo);
       }
 
       // Gerçek API çağrısı
@@ -171,8 +198,8 @@ export class ShopierService {
       
       // Fallback: Direkt form yöntemi
       console.log('🔄 Fallback: Direkt form yöntemine geçiliyor...');
-      const totalAmount = products.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
-      return this.createDirectPaymentForm(products[0].product, buyerInfo, totalAmount);
+      const totalAmount = this.calculateCartTotal(products, discountInfo);
+      return this.createDirectPaymentForm(products[0].product, buyerInfo, totalAmount, discountInfo);
     }
   }
 
@@ -192,7 +219,7 @@ export class ShopierService {
   }
 
   /**
-   * Sepet için ödeme işlemi
+   * Sepet için ödeme işlemi - İYİLEŞTİRİLMİŞ VERSİYON
    */
   static async createCartPayment(
     cartItems: Array<{
@@ -214,62 +241,62 @@ export class ShopierService {
       console.log('📦 Sepet:', cartItems.length, 'ürün');
       console.log('💰 İndirim:', discountInfo ? discountInfo.discountAmount + ' TL' : 'Yok');
       
-      // İndirim varsa fiyatları ayarla
-      if (discountInfo && discountInfo.discountAmount > 0) {
-        const totalOriginal = cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
-        const discountRatio = discountInfo.discountAmount / totalOriginal;
-        
-        // Her ürünün fiyatından orantılı indirim düş
-        cartItems = cartItems.map(item => ({
-          ...item,
-          product: {
-            ...item.product,
-            price: Math.max(1, Math.round(item.product.price * (1 - discountRatio)))
-          }
-        }));
-        
-        console.log('✅ İndirim uygulandı. Yeni toplam:', 
-          cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0));
+      // Toplam tutarı hesapla
+      const totalAmount = this.calculateCartTotal(cartItems, discountInfo);
+      console.log('💳 Shopier\'e gönderilecek toplam tutar:', totalAmount, 'TL');
+      
+      // Eğer toplam tutar 0 veya negatifse hata ver
+      if (totalAmount <= 0) {
+        throw new Error('Geçersiz toplam tutar. Lütfen sepetinizi kontrol edin.');
       }
 
-      return this.createModernPayment(cartItems, buyerInfo);
+      return this.createModernPayment(cartItems, buyerInfo, discountInfo);
     } catch (error) {
       console.error('❌ Sepet ödeme hatası:', error);
-      throw new Error('Sepet ödeme işlemi başlatılamadı');
+      throw new Error('Sepet ödeme işlemi başlatılamadı: ' + error.message);
     }
   }
 
   /**
-   * Direkt ödeme formu oluştur (fallback method)
+   * Direkt ödeme formu oluştur (fallback method) - İYİLEŞTİRİLMİŞ
    */
   private static createDirectPaymentForm(
     product: ShopierProduct,
     buyerInfo: { name: string; email: string; phone?: string; },
-    totalAmount: number
+    totalAmount: number,
+    discountInfo?: { discountAmount: number; campaignTitle: string; }
   ): string {
     try {
       console.log('📋 Direkt ödeme formu oluşturuluyor...');
+      console.log('💳 Toplam tutar:', totalAmount, 'TL');
       
       const randomNr = Math.floor(Math.random() * 1000000).toString();
       const orderId = `NUMA_${Date.now()}`;
       const [buyerName, ...surnameArray] = buyerInfo.name.split(' ');
       const buyerSurname = surnameArray.join(' ') || '';
       
+      // Ürün adını oluştur (kampanya varsa dahil et)
+      let productName = product.name;
+      if (discountInfo && discountInfo.campaignTitle) {
+        productName = `${product.name} - ${discountInfo.campaignTitle}`;
+      }
+      
       // İmza oluştur
-      const signatureString = `${this.API_KEY}${this.WEBSITE_INDEX}${orderId}${totalAmount}TRY${randomNr}${this.API_SECRET}`;
+      const signatureString = `${this.API_KEY}${this.WEBSITE_INDEX}${orderId}${totalAmount.toFixed(2)}TRY${randomNr}${this.API_SECRET}`;
       const signature = CryptoJS.SHA256(signatureString).toString();
       
       if (this.DEBUG_MODE) {
         console.log('🔐 İmza bilgileri:');
         console.log('Signature String:', signatureString);
         console.log('Generated Signature:', signature);
+        console.log('📦 Ürün adı:', productName);
       }
 
       const formData: ShopierFormData = {
         API_key: this.API_KEY,
         website_index: this.WEBSITE_INDEX,
         platform_order_id: orderId,
-        product_name: product.name,
+        product_name: productName,
         product_type: 1,
         total_order_value: totalAmount.toFixed(2),
         currency: 'TRY',
@@ -334,8 +361,35 @@ export class ShopierService {
     return null;
   }
 
+  /**
+   * Callback doğrulama - GÜVENLİK İÇİN EKLENDİ
+   */
   static verifyCallback(postData: any): boolean {
-    // Callback doğrulama fonksiyonu
-    return true;
+    try {
+      // Gerekli alanları kontrol et
+      if (!postData.signature || !postData.platform_order_id || !postData.total_order_value) {
+        console.error('❌ Callback doğrulama: Eksik alanlar');
+        return false;
+      }
+
+      // İmzayı yeniden oluştur
+      const signatureString = `${this.API_KEY}${this.WEBSITE_INDEX}${postData.platform_order_id}${postData.total_order_value}TRY${postData.random_nr || ''}${this.API_SECRET}`;
+      const expectedSignature = CryptoJS.SHA256(signatureString).toString();
+
+      // İmzaları karşılaştır
+      const isValid = postData.signature === expectedSignature;
+
+      if (this.DEBUG_MODE) {
+        console.log('🔐 Callback doğrulama:');
+        console.log('Received signature:', postData.signature);
+        console.log('Expected signature:', expectedSignature);
+        console.log('Is valid:', isValid);
+      }
+
+      return isValid;
+    } catch (error) {
+      console.error('❌ Callback doğrulama hatası:', error);
+      return false;
+    }
   }
 }

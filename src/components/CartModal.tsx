@@ -56,13 +56,11 @@ const CartModal: React.FC<CartModalProps> = ({
     setIsProcessingPayment(true);
 
     try {
-      // Kampanyalı fiyat ile ödeme
-      const finalTotal = campaignData?.campaignApplied ? campaignData.finalTotal : cartTotal;
-      
+      // Sepet ürünlerini Shopier formatına çevir
       const shopierCartItems = cartItems.map(item => ({
         product: {
           name: item.product.name,
-          price: item.product.price,
+          price: item.product.price, // Orijinal fiyat (indirim Shopier'de hesaplanacak)
           currency: 'TRY',
           description: item.product.description,
           image_url: item.product.image,
@@ -71,20 +69,17 @@ const CartModal: React.FC<CartModalProps> = ({
         quantity: item.quantity
       }));
 
-      // Eğer kampanya varsa, son ürün olarak indirim kalemi ekle
-      if (campaignData?.campaignApplied && campaignData.discountAmount > 0) {
-        shopierCartItems.push({
-          product: {
-            name: `${campaignData.campaignTitle} - İndirim`,
-            price: -campaignData.discountAmount, // Negatif fiyat
-            currency: 'TRY',
-            description: campaignData.campaignDescription || 'Kampanya indirimi',
-            image_url: '',
-            category: 'unisex'
-          },
-          quantity: 1
-        });
-      }
+      // Kampanya bilgilerini hazırla
+      const discountInfo = campaignData?.campaignApplied && campaignData.discountAmount > 0 ? {
+        discountAmount: campaignData.discountAmount,
+        campaignTitle: campaignData.campaignTitle
+      } : undefined;
+
+      console.log('🛒 Shopier\'e gönderilecek sepet bilgileri:');
+      console.log('📦 Ürün sayısı:', shopierCartItems.length);
+      console.log('💰 Orijinal toplam:', cartTotal, 'TL');
+      console.log('🎯 Kampanya indirimi:', discountInfo ? discountInfo.discountAmount + ' TL' : 'Yok');
+      console.log('💳 Final toplam:', campaignData?.campaignApplied ? campaignData.finalTotal : cartTotal, 'TL');
 
       const paymentUrl = await ShopierService.createCartPayment(
         shopierCartItems,
@@ -93,11 +88,7 @@ const CartModal: React.FC<CartModalProps> = ({
           email: user.email,
           phone: user.phone
         },
-        // Kampanya indirimi bilgisi
-        campaignData?.campaignApplied && campaignData.campaignTitle ? {
-          discountAmount: campaignData.discountAmount,
-          campaignTitle: campaignData.campaignTitle
-        } : undefined
+        discountInfo
       );
 
       console.log('🚀 Ödeme sayfasına yönlendiriliyor:', paymentUrl);
