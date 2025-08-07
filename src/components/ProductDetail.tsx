@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Heart, ShoppingBag, Package, Star, Plus, Minus, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, ShoppingBag, Package, Star, Plus, Minus, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Product } from '../types';
 import { useProducts } from '../hooks/useProducts';
 import { useCart } from '../hooks/useCart';
-import { useAuth } from '../hooks/useAuth';
-import { ShopierService } from '../services/shopierService';
 import SEO from './SEO';
 
 const ProductDetail: React.FC = () => {
@@ -13,23 +11,12 @@ const ProductDetail: React.FC = () => {
   const navigate = useNavigate();
   const { products } = useProducts();
   const { addToCart } = useCart();
-  const { user, openLoginModal } = useAuth();
   
   const [product, setProduct] = useState<Product | null>(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
-  const [isLiked, setIsLiked] = useState(false);
-  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-  const [pendingPurchase, setPendingPurchase] = useState(false);
 
-  // User state değişimini dinle ve pending purchase'ı kontrol et
-  useEffect(() => {
-    if (user && pendingPurchase) {
-      console.log('✅ ProductDetail: Kullanıcı giriş yaptı, bekleyen satın alma başlatılıyor...');
-      setPendingPurchase(false);
-      processPurchase();
-    }
-  }, [user, pendingPurchase]);
+
 
   useEffect(() => {
     if (id && products.length > 0) {
@@ -75,53 +62,9 @@ const ProductDetail: React.FC = () => {
     }
   };
 
-  const processPurchase = async () => {
-    if (!user || !product) {
-      console.error('❌ processPurchase: User veya product null!');
-      return;
-    }
-
-    setIsProcessingPayment(true);
-
-    try {
-      const shopierProduct = {
-        name: product.name,
-        price: product.price * quantity,
-        currency: 'TRY',
-        description: product.description,
-        image_url: product.image,
-        category: product.category
-      };
-
-      const paymentUrl = await ShopierService.createSingleProductPayment(
-        shopierProduct,
-        {
-          name: user.name,
-          email: user.email,
-          phone: user.phone
-        }
-      );
-      
-      window.location.href = paymentUrl;
-    } catch (error) {
-      console.error('Direkt satın alma hatası:', error);
-      alert('Ödeme işlemi başlatılamadı. Lütfen tekrar deneyin.');
-    } finally {
-      setIsProcessingPayment(false);
-    }
-  };
-
-  const handleDirectPurchase = async () => {
-    console.log('🛒 ProductDetail: Hemen Satın Al butonu tıklandı', { user, product });
-    
-    if (!user) {
-      console.log('❌ ProductDetail: Kullanıcı giriş yapmamış, login modal açılıyor');
-      setPendingPurchase(true);
-      openLoginModal();
-      return;
-    }
-
-    await processPurchase();
+  const handleDirectPurchase = () => {
+    addToCart(product, quantity);
+    navigate('/');
   };
 
   const nextImage = () => {
@@ -240,16 +183,7 @@ const ProductDetail: React.FC = () => {
                 )}
               </div>
 
-              {/* Like Button */}
-              <button
-                onClick={() => setIsLiked(!isLiked)}
-                className="absolute top-4 right-4 w-12 h-12 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white transition-all shadow-lg"
-              >
-                <Heart 
-                  size={20} 
-                  className={`${isLiked ? 'text-red-500 fill-red-500' : 'text-gray-600'}`}
-                />
-              </button>
+
             </div>
 
             {/* Thumbnail Images */}
@@ -398,10 +332,10 @@ const ProductDetail: React.FC = () => {
 
                 <button
                   onClick={handleDirectPurchase}
-                  disabled={!product.inStock || isProcessingPayment}
+                  disabled={!product.inStock}
                   className="w-full bg-green-600 text-white py-4 rounded-lg font-medium hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isProcessingPayment ? 'İşleniyor...' : 'Hemen Satın Al'}
+                  Hemen Satın Al
                 </button>
               </div>
 

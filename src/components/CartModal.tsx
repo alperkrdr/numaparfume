@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { X, Plus, Minus, Trash2, ShoppingBag, CreditCard, Tag, Gift } from 'lucide-react';
 import { CartItem } from '../hooks/useCart';
-import { User } from '../hooks/useAuth';
-import { ShopierService } from '../services/shopierService';
 import { CampaignService } from '../services/campaignService';
 import { useSettings } from '../hooks/useSettings';
+import PaymentForm from './PaymentForm';
 
 interface CartModalProps {
   isOpen: boolean;
@@ -14,8 +13,7 @@ interface CartModalProps {
   removeFromCart: (productId: string) => void;
   clearCart: () => void;
   getCartTotal: () => number;
-  user: User | null;
-  onLoginRequired: () => void;
+  onPaymentRequired: () => void;
 }
 
 const CartModal: React.FC<CartModalProps> = ({
@@ -26,10 +24,9 @@ const CartModal: React.FC<CartModalProps> = ({
   removeFromCart,
   clearCart,
   getCartTotal,
-  user,
-  onLoginRequired
+  onPaymentRequired
 }) => {
-  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [showPaymentForm, setShowPaymentForm] = useState(false);
   const { settings } = useSettings();
 
   // Kampanya hesaplama
@@ -42,78 +39,13 @@ const CartModal: React.FC<CartModalProps> = ({
     ? CampaignService.getCampaignMessage(cartTotal, settings.campaignSettings)
     : null;
 
-  const handleCheckout = async () => {
-    if (!user) {
-      onLoginRequired();
-      return;
-    }
-
+  const handleCheckout = () => {
     if (cartItems.length === 0) {
       alert('Sepetiniz boş');
       return;
     }
 
-    setIsProcessingPayment(true);
-
-    try {
-      // Kampanyalı fiyat ile ödeme
-      const finalTotal = campaignData?.campaignApplied ? campaignData.finalTotal : cartTotal;
-      
-      const shopierCartItems = cartItems.map(item => ({
-        product: {
-          name: item.product.name,
-          price: item.product.price,
-          currency: 'TRY',
-          description: item.product.description,
-          image_url: item.product.image,
-          category: item.product.category
-        },
-        quantity: item.quantity
-      }));
-
-      // Eğer kampanya varsa, son ürün olarak indirim kalemi ekle
-      if (campaignData?.campaignApplied && campaignData.discountAmount > 0) {
-        shopierCartItems.push({
-          product: {
-            name: `${campaignData.campaignTitle} - İndirim`,
-            price: -campaignData.discountAmount, // Negatif fiyat
-            currency: 'TRY',
-            description: campaignData.campaignDescription || 'Kampanya indirimi',
-            image_url: '',
-            category: 'unisex'
-          },
-          quantity: 1
-        });
-      }
-
-      const paymentUrl = await ShopierService.createCartPayment(
-        shopierCartItems,
-        {
-          name: user.name,
-          email: user.email,
-          phone: user.phone
-        },
-        // Kampanya indirimi bilgisi
-        campaignData?.campaignApplied && campaignData.campaignTitle ? {
-          discountAmount: campaignData.discountAmount,
-          campaignTitle: campaignData.campaignTitle
-        } : undefined
-      );
-
-      console.log('🚀 Ödeme sayfasına yönlendiriliyor:', paymentUrl);
-      
-      // Ödeme sayfasına yönlendir (aynı sekmede)
-      window.location.href = paymentUrl;
-      
-      // Sepeti temizle
-      clearCart();
-      onClose();
-    } catch (error) {
-      console.error('Checkout error:', error);
-      alert('Ödeme işlemi başlatılamadı. Lütfen tekrar deneyin.');
-    } finally {
-      setIsProcessingPayment(false);
-    }
+    setShowPaymentForm(true);
   };
 
   if (!isOpen) return null;
@@ -254,20 +186,10 @@ const CartModal: React.FC<CartModalProps> = ({
             <div className="space-y-3">
               <button
                 onClick={handleCheckout}
-                disabled={isProcessingPayment}
-                className="w-full bg-primary-600 text-white py-3 rounded-lg hover:bg-primary-700 transition-colors font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full bg-primary-600 text-white py-3 rounded-lg hover:bg-primary-700 transition-colors font-medium flex items-center justify-center gap-2"
               >
-                {isProcessingPayment ? (
-                  'İşleniyor...'
-                ) : (
-                  <>
-                    <CreditCard size={18} />
-                    {campaignData?.campaignApplied ? 
-                      `₺${campaignData.finalTotal.toLocaleString()} Öde` : 
-                      'Ödemeye Geç'
-                    }
-                  </>
-                )}
+                <CreditCard size={18} />
+                Ödemeye Geç
               </button>
 
               <button
@@ -278,14 +200,19 @@ const CartModal: React.FC<CartModalProps> = ({
               </button>
             </div>
 
-            {!user && (
-              <p className="text-center text-sm text-gray-500 mt-3">
-                Ödeme için giriş yapmanız gerekiyor
-              </p>
-            )}
+
           </div>
         )}
       </div>
+
+      {/* Payment Form */}
+      <PaymentForm
+        isOpen={showPaymentForm}
+        onClose={() => setShowPaymentForm(false)}
+        cartItems={cartItems}
+        getCartTotal={getCartTotal}
+        clearCart={clearCart}
+      />
     </div>
   );
 };

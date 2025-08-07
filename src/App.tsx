@@ -15,7 +15,6 @@ const CollectionPage = lazy(() => import('./components/CollectionPage'));
 const CategoryPage = lazy(() => import('./components/CategoryPage'));
 const FeaturedPage = lazy(() => import('./components/FeaturedPage'));
 const Forum = lazy(() => import('./components/Forum'));
-const AdminPanel = lazy(() => import('./components/AdminPanel').then(module => ({ default: module.AdminPanel })));
 const PaymentCallback = lazy(() => import('./components/PaymentCallback'));
 const PaymentSuccess = lazy(() => import('./components/PaymentSuccess'));
 const PaymentFailed = lazy(() => import('./components/PaymentFailed'));
@@ -99,12 +98,6 @@ function App() {
     <Router future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
       <div className="min-h-screen bg-white">
         <Routes>
-          <Route path="/admin" element={
-            <Suspense fallback={<LoadingSpinner />}>
-              <AdminPanel />
-            </Suspense>
-          } />
-          
           {/* Product Detail Page */}
           <Route path="/product/:id" element={
             <Suspense fallback={<LoadingSpinner />}>

@@ -1,11 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Product } from '../types';
-import { ShoppingBag, Heart, Star, Package, Plus } from 'lucide-react';
-import { useAuth } from '../hooks/useAuth';
+import { ShoppingBag, Star, Package, Plus } from 'lucide-react';
 import { useCart } from '../hooks/useCart';
-import { useFavorites } from '../hooks/useFavorites';
-import { ShopierService } from '../services/shopierService';
 import OptimizedImage from './OptimizedImage';
 
 interface ProductCardProps {
@@ -13,144 +10,26 @@ interface ProductCardProps {
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
-  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-  const [pendingPurchase, setPendingPurchase] = useState(false);
-  const { user, openLoginModal } = useAuth();
-  const { addToCart: addToCartOld } = useCart();
-  const { isFavorite, toggleFavorite, addToCart } = useFavorites();
+  const { addToCart } = useCart();
   const navigate = useNavigate();
 
-  // Pending purchase kontrol et (kullanıcı giriş yaptığında)
-  React.useEffect(() => {
-    // Eğer kullanıcı giriş yaptı ve bekleyen bir satın alma varsa
-    if (user && pendingPurchase) {
-      console.log('✅ Kullanıcı giriş yaptı, bekleyen satın alma başlatılıyor...');
-      setPendingPurchase(false);
-      processPurchase();
-    }
-  }, [user, pendingPurchase]);
+
 
   const handleProductClick = () => {
     navigate(`/product/${product.id}`);
   };
 
-  // Satın alma işlemini gerçekleştir
-  const processPurchase = async () => {
-    if (!user) {
-      console.error('❌ processPurchase: User null!');
-      return;
-    }
-
-    setIsProcessingPayment(true);
-    console.log('💳 Ödeme işlemi başlatılıyor...');
-
-    try {
-      const shopierProduct = {
-        name: product.name,
-        price: product.price,
-        currency: 'TRY',
-        description: product.description,
-        image_url: product.image,
-        category: product.category
-      };
-
-      console.log('📦 Shopier ürün verisi:', shopierProduct);
-      console.log('👤 Kullanıcı verisi:', {
-        name: user.name,
-        email: user.email,
-        phone: user.phone
-      });
-
-      const paymentUrl = await ShopierService.createSingleProductPayment(
-        shopierProduct,
-        {
-          name: user.name,
-          email: user.email,
-          phone: user.phone
-        }
-      );
-
-      console.log('🔗 Ödeme URL\'si oluşturuldu:', paymentUrl);
-      
-      // Ödeme sayfasına yönlendir (aynı sayfada)
-      console.log('🔄 Ödeme sayfasına yönlendiriliyor...');
-      window.location.href = paymentUrl;
-    } catch (error) {
-      console.error('❌ Direkt satın alma hatası:', error);
-      alert('Ödeme işlemi başlatılamadı. Lütfen tekrar deneyin.');
-    } finally {
-      setIsProcessingPayment(false);
-    }
-  };
-
-  const handleDirectPurchase = async () => {
-    console.log('🛒 Hemen Satın Al butonu tıklandı', { user, product });
-    
-    if (!user) {
-      console.log('❌ Kullanıcı giriş yapmamış, login modal açılıyor');
-      setPendingPurchase(true); // Bekleyen satın alma flag'i
-      openLoginModal();
-      console.log('🔄 Login modal açıldı, kullanıcı giriş yapması bekleniyor...');
-      return;
-    }
-
-    // Kullanıcı varsa direkt satın almayı başlat
-    await processPurchase();
+  const handleDirectPurchase = () => {
+    // Sepete ekle ve ödeme formuna yönlendir
+    addToCart(product, 1);
   };
 
   const [isAddingToCart, setIsAddingToCart] = useState(false);
 
-  const handleAddToCart = async (e: React.MouseEvent) => {
+  const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
-    if (isAddingToCart) {
-      console.log('⏸️ Sepete ekleme işlemi devam ediyor, atlandı');
-      return;
-    }
-
-    if (!user) {
-      openLoginModal();
-      return;
-    }
-    
-    console.log('🛍️ Sepete Ekle butonu tıklandı', { 
-      productId: product.id, 
-      productName: product.name,
-      productPrice: product.price
-    });
-    
-    if (!product || !product.id) {
-      console.error('❌ Geçersiz ürün verisi:', product);
-      alert('Ürün bilgisi eksik. Lütfen sayfayı yenileyip tekrar deneyin.');
-      return;
-    }
-    
-    try {
-      setIsAddingToCart(true);
-      await addToCart(product.id, 1);
-      console.log('✅ addToCart fonksiyonu çağrıldı');
-      
-      // Başarı bildirimi
-      const notification = document.createElement('div');
-      notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
-      notification.textContent = '✅ Ürün sepete eklendi!';
-      document.body.appendChild(notification);
-      
-      setTimeout(() => {
-        notification.remove();
-      }, 3000);
-      
-    } catch (error) {
-      console.error('❌ Sepete ekleme hatası:', error);
-      if (error instanceof Error) {
-        alert(error.message);
-      } else {
-        alert('Ürün sepete eklenirken bir hata oluştu.');
-      }
-    } finally {
-      setIsAddingToCart(false);
-    }
+    addToCart(product, 1);
   };
 
   const discountPercentage = product.originalPrice 
@@ -194,59 +73,16 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           ) : null}
         </div>
 
-        {/* Favorite Button */}
-        <button
-          onClick={async (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            if (!user) {
-              openLoginModal();
-              return;
-            }
-            
-            try {
-              await toggleFavorite(product.id);
-            } catch (error) {
-              console.error('❌ Favori güncelleme hatası:', error);
-              if (error instanceof Error) {
-                alert(error.message);
-              }
-            }
-          }}
-          className="absolute top-4 right-4 w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white transition-all duration-300 group/heart"
-          title={isFavorite(product.id) ? 'Favorilerden çıkar' : 'Favorilere ekle'}
-        >
-          <Heart 
-            size={18} 
-            className={`transition-all duration-300 group-hover/heart:scale-110 ${
-              isFavorite(product.id) ? 'text-red-500 fill-red-500' : 'text-gray-600'
-            }`}
-          />
-        </button>
+
 
         {/* Quick Add to Cart */}
         <button
           onClick={handleAddToCart}
-          disabled={!product.inStock || (product.stockQuantity || 0) === 0 || isAddingToCart}
-          className={`absolute bottom-4 right-4 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500 opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl ${
-            isAddingToCart 
-              ? 'bg-green-500 text-white scale-110 animate-pulse' 
-              : 'bg-primary-600 text-white hover:bg-primary-700 hover:scale-105'
-          }`}
-          title={
-            !product.inStock 
-              ? 'Tükendi' 
-              : isAddingToCart 
-                ? 'Sepete Ekleniyor...' 
-                : 'Sepete Ekle'
-          }
+          disabled={!product.inStock || (product.stockQuantity || 0) === 0}
+          className="absolute bottom-4 right-4 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500 opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl bg-primary-600 text-white hover:bg-primary-700 hover:scale-105"
+          title={!product.inStock ? 'Tükendi' : 'Sepete Ekle'}
         >
-          {isAddingToCart ? (
-            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-          ) : (
           <Plus size={18} />
-          )}
         </button>
       </div>
 
