@@ -146,26 +146,15 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         <div className="space-y-2">
           <button
             onClick={handleDirectPurchase}
-            disabled={!product.inStock || isProcessingPayment}
+            disabled={!product.inStock}
             className={`w-full py-3 px-4 rounded-xl font-medium transition-all duration-300 flex items-center justify-center gap-2 ${
               !product.inStock
                 ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                : isProcessingPayment
-                  ? 'bg-green-500 text-white'
-                  : 'bg-primary-600 text-white hover:bg-primary-700 hover:shadow-lg transform hover:scale-105'
+                : 'bg-primary-600 text-white hover:bg-primary-700 hover:shadow-lg transform hover:scale-105'
             }`}
           >
-            {isProcessingPayment ? (
-              <>
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                Ödeme sayfasına yönlendiriliyor...
-              </>
-            ) : (
-              <>
             <ShoppingBag size={18} />
-                {product.inStock ? '💳 Hemen Satın Al' : 'Stokta Yok'}
-              </>
-            )}
+            {product.inStock ? '💳 Hemen Satın Al' : 'Stokta Yok'}
           </button>
 
           {product.inStock && (
