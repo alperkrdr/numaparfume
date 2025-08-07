@@ -6,6 +6,7 @@ interface ShopierProduct {
   image_url?: string;
   category?: string;
   quantity?: number;
+  shopierLink?: string; // Yeni eklenen alan
 }
 
 interface ShopierPaymentRequest {
@@ -82,8 +83,38 @@ export class ShopierService {
     : 'https://numaparfume.com';
   
   // Test modunu aktif etmek için değiştirin
-  private static readonly TEST_MODE = true;
+  private static readonly TEST_MODE = false;
   private static readonly DEBUG_MODE = true;
+
+  /**
+   * Admin panelinden girilen Shopier linkini kullanarak direkt ödeme işlemi
+   */
+  static async createSingleProductPayment(
+    product: ShopierProduct,
+    buyerInfo: {
+      name: string;
+      email: string;
+      phone?: string;
+    }
+  ): Promise<string> {
+    try {
+      console.log('🛒 Tek ürün ödeme işlemi başlatılıyor...');
+      console.log('📦 Ürün:', product.name, 'Fiyat:', product.price);
+      
+      // Eğer ürünün Shopier linki varsa, direkt kullan
+      if (product.shopierLink) {
+        console.log('🔗 Admin panelinden girilen Shopier linki kullanılıyor:', product.shopierLink);
+        return product.shopierLink;
+      }
+      
+      // Yoksa normal ödeme işlemini başlat
+      const productArray = [{ product, quantity: 1 }];
+      return this.createModernPayment(productArray, buyerInfo);
+    } catch (error) {
+      console.error('❌ Tek ürün ödeme hatası:', error);
+      throw new Error('Ödeme işlemi başlatılamadı');
+    }
+  }
 
   /**
    * Modern Shopier API kullanarak ödeme işlemi başlatır
@@ -174,21 +205,6 @@ export class ShopierService {
       const totalAmount = products.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
       return this.createDirectPaymentForm(products[0].product, buyerInfo, totalAmount);
     }
-  }
-
-  /**
-   * Tek ürün için ödeme işlemi
-   */
-  static async createSingleProductPayment(
-    product: ShopierProduct,
-    buyerInfo: {
-      name: string;
-      email: string;
-      phone?: string;
-    }
-  ): Promise<string> {
-    const productArray = [{ product, quantity: 1 }];
-    return this.createModernPayment(productArray, buyerInfo);
   }
 
   /**

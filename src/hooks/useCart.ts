@@ -33,45 +33,54 @@ export const useCart = () => {
     }
   }, [cartItems]);
 
-  const addToCart = useCallback((product: Product, quantity: number = 1) => {
-    console.log('🔧 addToCart başladı:', { productId: product.id, isUpdating, executionRef: addToCartExecutionRef.current });
+  const addToCart = useCallback((product: Product | string, quantity: number = 1) => {
+    console.log('🔧 addToCart başladı:', { product, quantity, isUpdating });
     
     if (isUpdating || addToCartExecutionRef.current) {
-      console.log('⏸️ İşlem zaten devam ediyor, iptal edildi');
+      console.log('⏸️ İşlem zaten devam ediyor, atlandı');
       return;
     }
     
     try {
       addToCartExecutionRef.current = true;
       setIsUpdating(true);
-      console.log('🔄 setIsUpdating(true) ve executionRef=true çağrıldı');
       
-      // State update'i tek seferde yap - Strict Mode kontrolü ile
-      setCartItems(prevCartItems => {
-        // Strict Mode için callback içinde ref kontrolü
-        if (!addToCartExecutionRef.current) {
-          console.log('⚠️ Callback çalıştı ama executionRef false, strict mode duplicate - atlandı');
-          return prevCartItems;
+      // Eğer product string ise (productId), Product objesi bul
+      let productObj: Product;
+      if (typeof product === 'string') {
+        // Product objesini bulmak için products hook'u kullanılmalı
+        // Şimdilik localStorage'dan mevcut ürünleri kontrol et
+        const savedCart = localStorage.getItem('numa-cart');
+        if (savedCart) {
+          const parsedCart = JSON.parse(savedCart);
+          const existingItem = parsedCart.find((item: CartItem) => item.product.id === product);
+          if (existingItem) {
+            productObj = existingItem.product;
+          } else {
+            throw new Error('Ürün bulunamadı');
+          }
+        } else {
+          throw new Error('Ürün bulunamadı');
         }
-        
-        console.log('📦 Önceki sepet:', prevCartItems.length, 'ürün');
-        const existingItem = prevCartItems.find(item => item.product.id === product.id);
-        console.log('🔍 Mevcut ürün:', existingItem ? 'VAR' : 'YOK');
+      } else {
+        productObj = product;
+      }
+      
+      setCartItems(prevCartItems => {
+        const existingItem = prevCartItems.find(item => item.product.id === productObj.id);
         
         let newCart;
         if (existingItem) {
           newCart = prevCartItems.map(item =>
-            item.product.id === product.id
+            item.product.id === productObj.id
               ? { ...item, quantity: item.quantity + quantity }
               : item
           );
           console.log('➕ Miktar artırıldı:', existingItem.quantity, '->', existingItem.quantity + quantity);
         } else {
-          newCart = [...prevCartItems, { product, quantity }];
+          newCart = [...prevCartItems, { product: productObj, quantity }];
           console.log('🆕 Yeni ürün eklendi, toplam:', newCart.length);
         }
-        
-        console.log('🎯 Yeni sepet oluşturuldu:', newCart.length, 'ürün');
         
         // LocalStorage'a senkron kaydet
         try {
@@ -102,7 +111,7 @@ export const useCart = () => {
             </div>
             <div class="flex-1">
               <div class="font-semibold text-sm">Sepete Eklendi!</div>
-              <div class="text-xs text-green-100 mt-0.5">${product.name} - ₺${product.price}</div>
+              <div class="text-xs text-green-100 mt-0.5">${productObj.name} - ₺${productObj.price}</div>
             </div>
             <div class="bg-white bg-opacity-20 rounded-full p-1">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -148,6 +157,7 @@ export const useCart = () => {
     setIsUpdating(true);
     setCartItems(prev => {
       const newCart = prev.filter(item => item.product.id !== productId);
+      localStorage.setItem('numa-cart', JSON.stringify(newCart));
       setTimeout(() => setIsUpdating(false), 100);
       return newCart;
     });
@@ -166,6 +176,7 @@ export const useCart = () => {
           ? { ...item, quantity }
           : item
       );
+      localStorage.setItem('numa-cart', JSON.stringify(newCart));
       setTimeout(() => setIsUpdating(false), 100);
       return newCart;
     });
@@ -188,20 +199,6 @@ export const useCart = () => {
 
   const openCart = useCallback(() => setIsCartOpen(true), []);
   const closeCart = useCallback(() => setIsCartOpen(false), []);
-
-  // Debug fonksiyonları (geliştirme için)
-  const debugClearLocalStorage = useCallback(() => {
-    localStorage.removeItem('numa-cart');
-    setCartItems([]);
-  }, []);
-
-  const debugLogCartState = useCallback(() => {
-    console.log('🔍 DEBUG SEPET RAPORU:');
-    console.log('  - State items:', cartItems);
-    console.log('  - localStorage:', localStorage.getItem('numa-cart'));
-    console.log('  - Item count:', getCartItemCount());
-    console.log('  - Total price:', getCartTotal());
-  }, [cartItems, getCartItemCount, getCartTotal]);
 
   return {
     cartItems,

@@ -55,6 +55,11 @@ const ProductDetail: React.FC = () => {
     : 0;
 
   const handleAddToCart = () => {
+    if (!user) {
+      openLoginModal();
+      return;
+    }
+
     try {
       addToCart(product, quantity);
       
@@ -84,13 +89,22 @@ const ProductDetail: React.FC = () => {
     setIsProcessingPayment(true);
 
     try {
+      // Eğer ürünün Shopier linki varsa, direkt kullan
+      if (product.shopierLink) {
+        console.log('🔗 Admin panelinden girilen Shopier linki kullanılıyor:', product.shopierLink);
+        window.location.href = product.shopierLink;
+        return;
+      }
+
+      // Yoksa normal Shopier API kullan
       const shopierProduct = {
         name: product.name,
         price: product.price * quantity,
         currency: 'TRY',
         description: product.description,
         image_url: product.image,
-        category: product.category
+        category: product.category,
+        shopierLink: product.shopierLink
       };
 
       const paymentUrl = await ShopierService.createSingleProductPayment(
