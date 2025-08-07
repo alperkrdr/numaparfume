@@ -5,7 +5,6 @@ import { Product } from '../types';
 import { useProducts } from '../hooks/useProducts';
 import { useCart } from '../hooks/useCart';
 import SEO from './SEO';
-import DirectBuyModal from './DirectBuyModal';
 
 const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -17,7 +16,6 @@ const ProductDetail: React.FC = () => {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [isLiked, setIsLiked] = useState(false);
-  const [isDirectBuyModalOpen, setIsDirectBuyModalOpen] = useState(false);
 
   useEffect(() => {
     if (id && products.length > 0) {
@@ -50,8 +48,11 @@ const ProductDetail: React.FC = () => {
   };
 
   const handleDirectPurchase = () => {
-    if (!product) return;
-    setIsDirectBuyModalOpen(true);
+    if (product && product.externalLink) {
+      window.location.href = product.externalLink;
+    } else {
+      alert('Bu ürün için direkt satın alma linki bulunmuyor.');
+    }
   };
 
   const nextImage = () => {
@@ -347,11 +348,6 @@ const ProductDetail: React.FC = () => {
           </div>
         </div>
       </div>
-      <DirectBuyModal
-        isOpen={isDirectBuyModalOpen}
-        onClose={() => setIsDirectBuyModalOpen(false)}
-        product={product}
-      />
     </div>
     </>
   );

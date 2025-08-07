@@ -5,7 +5,6 @@ import { ShoppingBag, Heart, Star, Package, Plus } from 'lucide-react';
 import { useCart } from '../hooks/useCart';
 import { useFavorites } from '../hooks/useFavorites';
 import OptimizedImage from './OptimizedImage';
-import DirectBuyModal from './DirectBuyModal';
 
 interface ProductCardProps {
   product: Product;
@@ -13,7 +12,6 @@ interface ProductCardProps {
 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const [isAddingToCart, setIsAddingToCart] = useState(false);
-  const [isDirectBuyModalOpen, setIsDirectBuyModalOpen] = useState(false);
 
   const { addToCart } = useCart();
   const { isFavorite, toggleFavorite } = useFavorites();
@@ -24,7 +22,12 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   };
 
   const handleDirectPurchase = () => {
-    setIsDirectBuyModalOpen(true);
+    if (product.externalLink) {
+      window.location.href = product.externalLink;
+    } else {
+      // Fallback or error message if no link is provided
+      alert('Bu ürün için direkt satın alma linki bulunmuyor.');
+    }
   };
 
   const handleAddToCart = (e: React.MouseEvent) => {
@@ -201,11 +204,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           </div>
         </div>
       </div>
-      <DirectBuyModal
-        isOpen={isDirectBuyModalOpen}
-        onClose={() => setIsDirectBuyModalOpen(false)}
-        product={product}
-      />
     </>
   );
 };

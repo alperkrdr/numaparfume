@@ -206,8 +206,8 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onCategorySelect }) => {
                   }`}></span>
                   </button>
                 ))}
-              <Link
-                to="/collection"
+              <button
+                onClick={() => navigate('/collection')}
                 className={`text-gray-700 hover:text-purple-600 font-medium transition-colors relative group ${
                   location.pathname === '/collection' ? 'text-purple-600' : ''
                 }`}
@@ -216,9 +216,9 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onCategorySelect }) => {
                 <span className={`absolute bottom-0 left-0 h-0.5 bg-purple-600 transition-all duration-300 ${
                   location.pathname === '/collection' ? 'w-full' : 'w-0 group-hover:w-full'
                 }`}></span>
-              </Link>
-              <Link
-                to="/featured"
+              </button>
+              <button
+                onClick={() => navigate('/featured')}
                 className={`text-gray-700 hover:text-purple-600 font-medium transition-colors relative group ${
                   location.pathname === '/featured' ? 'text-purple-600' : ''
                 }`}
@@ -227,7 +227,7 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onCategorySelect }) => {
                 <span className={`absolute bottom-0 left-0 h-0.5 bg-purple-600 transition-all duration-300 ${
                   location.pathname === '/featured' ? 'w-full' : 'w-0 group-hover:w-full'
                 }`}></span>
-              </Link>
+              </button>
             </div>
           </nav>
         </div>
@@ -295,21 +295,19 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onCategorySelect }) => {
                     </button>
                   ))}
                   
-                  <Link
-                    to="/collection"
-                    className="flex items-center py-3 px-4 text-gray-700 hover:text-purple-600 hover:bg-gray-50 rounded-lg transition-colors"
-                    onClick={() => setIsMenuOpen(false)}
+                  <button
+                    onClick={() => { navigate('/collection'); setIsMenuOpen(false); }}
+                    className="flex items-center w-full py-3 px-4 text-gray-700 hover:text-purple-600 hover:bg-gray-50 rounded-lg transition-colors text-left"
                   >
                     Koleksiyon
-                  </Link>
+                  </button>
                   
-                  <Link
-                    to="/featured"
-                    className="flex items-center py-3 px-4 text-gray-700 hover:text-purple-600 hover:bg-gray-50 rounded-lg transition-colors"
-                    onClick={() => setIsMenuOpen(false)}
+                  <button
+                    onClick={() => { navigate('/featured'); setIsMenuOpen(false); }}
+                    className="flex items-center w-full py-3 px-4 text-gray-700 hover:text-purple-600 hover:bg-gray-50 rounded-lg transition-colors text-left"
                   >
                     Öne Çıkanlar
-                  </Link>
+                  </button>
                 </nav>
               </div>
             </div>
