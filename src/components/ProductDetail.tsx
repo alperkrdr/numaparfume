@@ -7,6 +7,7 @@ import { useCart } from '../hooks/useCart';
 
 import { ShopierService } from '../services/shopierService';
 import SEO from './SEO';
+import OptimizedImage from './OptimizedImage';
 
 const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -153,10 +154,11 @@ const ProductDetail: React.FC = () => {
           <div className="space-y-4">
             {/* Main Image */}
             <div className="relative aspect-square bg-white rounded-2xl overflow-hidden shadow-lg">
-              <img
+              <OptimizedImage
                 src={images[selectedImageIndex]}
                 alt={product.name}
-                className="w-full h-full object-cover"
+                className="w-full h-80 object-cover rounded-xl bg-gray-100"
+                loading="lazy"
               />
               
               {/* Image Navigation */}
@@ -203,20 +205,17 @@ const ProductDetail: React.FC = () => {
             {/* Thumbnail Images */}
             {images.length > 1 && (
               <div className="flex gap-2 overflow-x-auto">
-                {images.map((image, index) => (
+                {images.map((img, idx) => (
                   <button
-                    key={index}
-                    onClick={() => setSelectedImageIndex(index)}
-                    className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${
-                      selectedImageIndex === index 
-                        ? 'border-primary-600' 
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
+                    key={idx}
+                    onClick={() => setSelectedImageIndex(idx)}
+                    className={`flex-shrink-0 w-16 h-16 object-cover rounded-lg border-2 ${selectedImageIndex === idx ? 'border-primary-600' : 'border-transparent'}`}
                   >
-                    <img
-                      src={image}
-                      alt={`${product.name} ${index + 1}`}
-                      className="w-full h-full object-cover"
+                    <OptimizedImage
+                      src={img}
+                      alt={product.name + ' küçük görsel'}
+                      className="w-16 h-16 object-cover rounded-lg border-2"
+                      loading="lazy"
                     />
                   </button>
                 ))}

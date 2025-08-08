@@ -241,9 +241,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           src={product.image}
           alt={product.name}
           width={300}
-          height={256}
-          className="w-full h-64 group-hover:scale-110 transition-transform duration-700"
-          loading="eager"
+          height={300}
+          className="w-full h-64 object-cover rounded-xl bg-gray-100"
+          loading="lazy"
         />
         
         {/* Badges */}
