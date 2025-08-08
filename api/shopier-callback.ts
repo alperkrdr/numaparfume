@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import express from 'express';
 import * as CryptoJS from 'crypto-js';
 
 // Shopier API bilgileri
@@ -51,7 +51,7 @@ function verifyShopierCallback(data: ShopierCallbackData): boolean {
 /**
  * Shopier callback handler
  */
-export default async function handler(req: Request, res: Response) {
+export default async function handler(req: express.Request, res: express.Response) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
