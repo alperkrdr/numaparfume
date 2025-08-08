@@ -32,81 +32,12 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     navigate(`/product/${product.id}`);
   };
 
-  const validateForm = (): boolean => {
-    const errors: Partial<CustomerInfo> = {};
-    
-    if (!customerInfo.name.trim()) {
-      errors.name = 'Ad soyad gerekli';
-    }
-    
-    if (!customerInfo.email.trim()) {
-      errors.email = 'E-posta gerekli';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerInfo.email)) {
-      errors.email = 'Geçerli bir e-posta adresi girin';
-    }
-    
-    if (!customerInfo.phone.trim()) {
-      errors.phone = 'Telefon numarası gerekli';
-    } else if (!/^[\d\s\-\+\(\)]{10,}$/.test(customerInfo.phone.replace(/\s/g, ''))) {
-      errors.phone = 'Geçerli bir telefon numarası girin';
-    }
-    
-    setFormErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
   // Satın alma işlemini gerçekleştir
-  const processPurchase = async () => {
-    if (!validateForm()) {
-      return;
-    }
-
-    setIsProcessingPayment(true);
-    console.log('💳 Ödeme işlemi başlatılıyor...');
-
-    try {
-      const shopierProduct = {
-        name: product.name,
-        price: product.price,
-        currency: 'TRY',
-        description: product.description,
-        image_url: product.image,
-        category: product.category
-      };
-
-      console.log('📦 Shopier ürün verisi:', shopierProduct);
-      console.log('👤 Kullanıcı verisi:', {
-        name: customerInfo.name,
-        email: customerInfo.email,
-        phone: customerInfo.phone
-      });
-
-      const paymentUrl = await ShopierService.createSingleProductPayment(
-        shopierProduct,
-        {
-          name: customerInfo.name,
-          email: customerInfo.email,
-          phone: customerInfo.phone
-        }
-      );
-
-      console.log('🔗 Ödeme URL\'si oluşturuldu:', paymentUrl);
-      
-      // Ödeme sayfasına yönlendir (aynı sayfada)
-      console.log('🔄 Ödeme sayfasına yönlendiriliyor...');
-      window.location.href = paymentUrl;
-    } catch (error) {
-      console.error('❌ Direkt satın alma hatası:', error);
-      alert('Ödeme işlemi başlatılamadı. Lütfen tekrar deneyin.');
-    } finally {
-      setIsProcessingPayment(false);
-    }
-  };
-
-  const handleDirectPurchase = async () => {
-    console.log('🛒 Hemen Satın Al butonu tıklandı', { product });
-    setShowCustomerForm(true);
-  };
+  // const processPurchase = async () => { ... } // KALDIR
+  // const handleDirectPurchase = async () => { ... } // KALDIR
+  // const validateForm = () => { ... } // KALDIR
+  // const showCustomerForm ile ilgili state ve kodlar KALDIR
+  // Sadece Sepete Ekle butonu kalsın
 
   const [isAddingToCart, setIsAddingToCart] = useState(false);
 
@@ -310,9 +241,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           src={product.image}
           alt={product.name}
           width={300}
-          height={256}
-          className="w-full h-64 group-hover:scale-110 transition-transform duration-700"
-          loading="eager"
+          height={300}
+          className="w-full h-64 object-cover rounded-xl bg-gray-100"
+          loading="lazy"
         />
         
         {/* Badges */}

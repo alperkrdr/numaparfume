@@ -4,6 +4,7 @@ import { CartItem } from '../hooks/useCart';
 import { ShopierService } from '../services/shopierService';
 import { CampaignService } from '../services/campaignService';
 import { useSettings } from '../hooks/useSettings';
+import OptimizedImage from './OptimizedImage';
 
 interface CartModalProps {
   isOpen: boolean;
@@ -301,10 +302,11 @@ const CartModal: React.FC<CartModalProps> = ({
                 <div className="space-y-4">
                   {cartItems.map((item) => (
                     <div key={item.product.id} className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
-                      <img
+                      <OptimizedImage
                         src={item.product.image}
                         alt={item.product.name}
                         className="w-16 h-16 object-cover rounded-lg"
+                        loading="lazy"
                       />
                       
                       <div className="flex-1">

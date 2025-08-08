@@ -14,7 +14,9 @@ export class StockService {
     quantity: number, 
     type: 'increase' | 'decrease' | 'sale' | 'adjustment',
     reason: string,
-    adminEmail?: string
+    adminEmail?: string,
+    salePriceType?: 'site' | 'manual',
+    manualSalePrice?: number
   ): Promise<void> {
     try {
       // Mevcut ürün bilgisini al
@@ -58,7 +60,10 @@ export class StockService {
         previousStock,
         newStock,
         reason,
-        adminEmail
+        adminEmail,
+        // Satış işlemi için fiyat tipi ve manuel fiyatı kaydet
+        ...(type === 'sale' && salePriceType ? { salePriceType } : {}),
+        ...(type === 'sale' && salePriceType === 'manual' && manualSalePrice ? { manualSalePrice } : {})
       };
 
       await addDoc(collection(db, this.historyCollection), historyEntry);
@@ -285,6 +290,29 @@ export class StockService {
     } catch (error) {
       console.error('❌ Stok uyarıları alma hatası:', error);
       return { lowStock: [], outOfStock: [], highStock: [] };
+    }
+  }
+
+  /**
+   * Belirli bir tarih aralığında veya tüm zamanlarda yapılan satış (sale) stok hareketlerini getirir
+   */
+  static async getSalesHistory({ startDate, endDate }: { startDate?: string; endDate?: string } = {}): Promise<StockHistory[]> {
+    try {
+      let q = query(
+        collection(db, this.historyCollection),
+        where('type', '==', 'sale')
+      );
+      if (startDate) {
+        q = query(q, where('date', '>=', startDate));
+      }
+      if (endDate) {
+        q = query(q, where('date', '<=', endDate));
+      }
+      const snapshot = await getDocs(q);
+      return snapshot.docs.map(doc => doc.data() as StockHistory);
+    } catch (error) {
+      console.error('❌ Satış geçmişi alma hatası:', error);
+      return [];
     }
   }
 } 
