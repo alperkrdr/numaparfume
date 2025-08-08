@@ -142,6 +142,9 @@ export interface StockHistory {
   newStock: number;
   reason: string;
   adminEmail?: string;
+  // Satış için ek alanlar:
+  salePriceType?: 'site' | 'manual'; // Satış fiyatı tipi
+  manualSalePrice?: number; // Elle girilen satış fiyatı (varsa)
 }
 
 export interface StockAnalytics {

@@ -14,7 +14,9 @@ export class StockService {
     quantity: number, 
     type: 'increase' | 'decrease' | 'sale' | 'adjustment',
     reason: string,
-    adminEmail?: string
+    adminEmail?: string,
+    salePriceType?: 'site' | 'manual',
+    manualSalePrice?: number
   ): Promise<void> {
     try {
       // Mevcut ürün bilgisini al
@@ -58,7 +60,10 @@ export class StockService {
         previousStock,
         newStock,
         reason,
-        adminEmail
+        adminEmail,
+        // Satış işlemi için fiyat tipi ve manuel fiyatı kaydet
+        ...(type === 'sale' && salePriceType ? { salePriceType } : {}),
+        ...(type === 'sale' && salePriceType === 'manual' && manualSalePrice ? { manualSalePrice } : {})
       };
 
       await addDoc(collection(db, this.historyCollection), historyEntry);

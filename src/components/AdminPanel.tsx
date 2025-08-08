@@ -96,6 +96,10 @@ export const AdminPanel: React.FC = () => {
     reason: ''
   });
 
+  // Stok güncelleme modalı içindeki satış işlemi için ek alanlar:
+  const [salePriceType, setSalePriceType] = useState<'site' | 'manual'>('site');
+  const [manualSalePrice, setManualSalePrice] = useState<number>(0);
+
   // Firebase Auth state listener
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -566,7 +570,9 @@ export const AdminPanel: React.FC = () => {
         stockUpdateForm.quantity,
         stockUpdateForm.type,
         stockUpdateForm.reason,
-        currentUser?.email || undefined
+        currentUser?.email || undefined,
+        stockUpdateForm.type === 'sale' ? salePriceType : undefined,
+        stockUpdateForm.type === 'sale' && salePriceType === 'manual' ? manualSalePrice : undefined
       );
 
       // Verileri yenile
@@ -1432,8 +1438,8 @@ export const AdminPanel: React.FC = () => {
                             >
                               <option value="increase">Stok Artır</option>
                               <option value="decrease">Stok Azalt</option>
-                              <option value="adjustment">Manuel Düzeltme</option>
                               <option value="sale">Satış</option>
+                              <option value="adjustment">Manuel Düzeltme</option>
                             </select>
                           </div>
 
@@ -1466,6 +1472,30 @@ export const AdminPanel: React.FC = () => {
                               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                             />
                           </div>
+
+                          {stockUpdateForm.type === 'sale' && (
+                            <div className="space-y-2">
+                              <label className="block text-sm font-medium text-gray-700 mb-1">Satış Fiyatı Tipi</label>
+                              <select
+                                value={salePriceType}
+                                onChange={e => setSalePriceType(e.target.value as 'site' | 'manual')}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              >
+                                <option value="site">Site Fiyatı ({selectedProductForStock?.price}₺)</option>
+                                <option value="manual">Elle Gir</option>
+                              </select>
+                              {salePriceType === 'manual' && (
+                                <input
+                                  type="number"
+                                  min="0"
+                                  value={manualSalePrice}
+                                  onChange={e => setManualSalePrice(Number(e.target.value))}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  placeholder="Elle satış fiyatı"
+                                />
+                              )}
+                            </div>
+                          )}
 
                           <div className="flex gap-3 pt-4">
                             <button
