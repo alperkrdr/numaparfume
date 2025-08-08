@@ -268,9 +268,9 @@ export class ForumService {
   }
 
   // Günlük makale oluştur
-  static async generateDailyArticle(apiKey: string): Promise<string> {
+  static async generateDailyArticle(): Promise<string> {
     try {
-      const article = await GeminiService.generateDailyArticle(apiKey);
+      const article = await GeminiService.generateDailyArticle();
       
       // Slug oluştur
       const slug = this.createSlug(article.title);
@@ -307,7 +307,7 @@ export class ForumService {
       .replace(/[^a-z0-9\s-]/g, '')
       .replace(/\s+/g, '-')
       .replace(/-+/g, '-')
-      .trim('-');
+      .replace(/^-+|-+$/g, '');
   }
 
   // Bugün makale oluşturuldu mu kontrol et
@@ -334,7 +334,7 @@ export class ForumService {
   }
 
   // Otomatik makale oluşturma kontrolü
-  static async checkAndGenerateAutoArticle(apiKey: string, dailyPostTime: string): Promise<boolean> {
+  static async checkAndGenerateAutoArticle(dailyPostTime: string): Promise<boolean> {
     try {
       // Bugün makale oluşturuldu mu kontrol et
       const hasToday = await this.checkTodayArticleExists();
@@ -350,18 +350,16 @@ export class ForumService {
 
       // Eğer hedef saat geçtiyse ve bugün makale yoksa oluştur
       if (now >= targetTime) {
-        await this.generateDailyArticle(apiKey);
-        
+        await this.generateDailyArticle();
+
         // SettingsService'e son oluşturma tarihini kaydet
         try {
           await SettingsService.updateLastPostDate();
         } catch (error) {
           console.warn('Last post date update failed:', error);
         }
-        
         return true;
       }
-
       return false;
     } catch (error) {
       console.error('Error in auto article generation:', error);
@@ -379,7 +377,6 @@ export class ForumService {
         // Sadece Firebase'e tam erişim varsa otomatik oluşturmayı çalıştır
         if (!fromCache && settings?.geminiSettings?.isActive && settings?.geminiSettings?.apiKey) {
           await this.checkAndGenerateAutoArticle(
-            settings.geminiSettings.apiKey,
             settings.geminiSettings.dailyPostTime || '09:00'
           );
         }
