@@ -8,6 +8,7 @@ import { useProducts } from './hooks/useProducts';
 import { ForumService } from './services/forumService';
 import SEO from './components/SEO';
 import CampaignBar from './components/CampaignBar';
+import ErrorBoundary from './components/ErrorBoundary';
 
 // Lazy load components for better performance
 const ProductDetail = lazy(() => import('./components/ProductDetail'));
@@ -30,7 +31,7 @@ const LoadingSpinner = () => (
 );
 
 function App() {
-  const { products, loading, searchProducts, getProductsByCategory, getFeaturedProducts } = useProducts();
+  const { products, loading, error, searchProducts, getProductsByCategory, getFeaturedProducts } = useProducts();
   const [filteredProducts, setFilteredProducts] = useState(products);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [currentView, setCurrentView] = useState<'all' | 'featured' | 'collection'>('all');
@@ -96,96 +97,99 @@ function App() {
 
   return (
     <Router future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
-      <div className="min-h-screen bg-white">
-        <Routes>
-          {/* Product Detail Page */}
-          <Route path="/product/:id" element={
-            <Suspense fallback={<LoadingSpinner />}>
-              <CampaignBar />
-              <Header onSearch={handleSearch} onCategorySelect={handleCategorySelect} />
-              <ProductDetail />
-              <Footer />
-            </Suspense>
-          } />
-          
-          {/* Collection Page */}
-          <Route path="/collection" element={
-            <Suspense fallback={<LoadingSpinner />}>
-              <CampaignBar />
-              <Header onSearch={handleSearch} onCategorySelect={handleCategorySelect} />
-              <CollectionPage />
-              <Footer />
-            </Suspense>
-          } />
-          
-          {/* Category Pages */}
-          <Route path="/category/:category" element={
-            <Suspense fallback={<LoadingSpinner />}>
-              <CampaignBar />
-              <Header onSearch={handleSearch} onCategorySelect={handleCategorySelect} />
-              <CategoryPage />
-              <Footer />
-            </Suspense>
-          } />
-          
-          {/* Featured Page */}
-          <Route path="/featured" element={
-            <Suspense fallback={<LoadingSpinner />}>
-              <CampaignBar />
-              <Header onSearch={handleSearch} onCategorySelect={handleCategorySelect} />
-              <FeaturedPage />
-              <Footer />
-            </Suspense>
-          } />
-          
-          {/* Forum */}
-          <Route path="/forum" element={
-            <Suspense fallback={<LoadingSpinner />}>
-              <CampaignBar />
-              <Header onSearch={handleSearch} onCategorySelect={handleCategorySelect} />
-              <Forum />
-              <Footer />
-            </Suspense>
-          } />
-          
-          {/* Payment Callback */}
-          <Route path="/payment-callback" element={
-            <Suspense fallback={<LoadingSpinner />}>
-              <PaymentCallback />
-            </Suspense>
-          } />
-          
-          {/* Payment Pages */}
-          <Route path="/payment-success" element={
-            <Suspense fallback={<LoadingSpinner />}>
-              <PaymentSuccess />
-            </Suspense>
-          } />
-          <Route path="/payment-failed" element={
-            <Suspense fallback={<LoadingSpinner />}>
-              <PaymentFailed />
-            </Suspense>
-          } />
-          
-          {/* Home Page */}
-          <Route path="/" element={
-            <>
-              <SEO />
-              <CampaignBar />
-              <Header onSearch={handleSearch} onCategorySelect={handleCategorySelect} />
-              <Hero />
-              <main className="container mx-auto px-4 py-12">
-                <ProductGrid 
-                  products={filteredProducts} 
-                  loading={loading}
-                  viewTitle={getViewTitle()}
-                />
-              </main>
-              <Footer />
-            </>
-          } />
-        </Routes>
-      </div>
+      <ErrorBoundary fallback={<div className="min-h-screen flex items-center justify-center text-red-600 text-lg font-bold">Bir hata oluştu. Lütfen sayfayı yenileyin.</div>}>
+        <div className="min-h-screen bg-white">
+          <Routes>
+            {/* Product Detail Page */}
+            <Route path="/product/:id" element={
+              <Suspense fallback={<LoadingSpinner />}>
+                <CampaignBar />
+                <Header onSearch={handleSearch} onCategorySelect={handleCategorySelect} />
+                <ProductDetail />
+                <Footer />
+              </Suspense>
+            } />
+            
+            {/* Collection Page */}
+            <Route path="/collection" element={
+              <Suspense fallback={<LoadingSpinner />}>
+                <CampaignBar />
+                <Header onSearch={handleSearch} onCategorySelect={handleCategorySelect} />
+                <CollectionPage />
+                <Footer />
+              </Suspense>
+            } />
+            
+            {/* Category Pages */}
+            <Route path="/category/:category" element={
+              <Suspense fallback={<LoadingSpinner />}>
+                <CampaignBar />
+                <Header onSearch={handleSearch} onCategorySelect={handleCategorySelect} />
+                <CategoryPage />
+                <Footer />
+              </Suspense>
+            } />
+            
+            {/* Featured Page */}
+            <Route path="/featured" element={
+              <Suspense fallback={<LoadingSpinner />}>
+                <CampaignBar />
+                <Header onSearch={handleSearch} onCategorySelect={handleCategorySelect} />
+                <FeaturedPage />
+                <Footer />
+              </Suspense>
+            } />
+            
+            {/* Forum */}
+            <Route path="/forum" element={
+              <Suspense fallback={<LoadingSpinner />}>
+                <CampaignBar />
+                <Header onSearch={handleSearch} onCategorySelect={handleCategorySelect} />
+                <Forum />
+                <Footer />
+              </Suspense>
+            } />
+            
+            {/* Payment Callback */}
+            <Route path="/payment-callback" element={
+              <Suspense fallback={<LoadingSpinner />}>
+                <PaymentCallback />
+              </Suspense>
+            } />
+            
+            {/* Payment Pages */}
+            <Route path="/payment-success" element={
+              <Suspense fallback={<LoadingSpinner />}>
+                <PaymentSuccess />
+              </Suspense>
+            } />
+            <Route path="/payment-failed" element={
+              <Suspense fallback={<LoadingSpinner />}>
+                <PaymentFailed />
+              </Suspense>
+            } />
+            
+            {/* Home Page */}
+            <Route path="/" element={
+              <>
+                <SEO />
+                <CampaignBar />
+                <Header onSearch={handleSearch} onCategorySelect={handleCategorySelect} />
+                <Hero />
+                <main className="container mx-auto px-4 py-12">
+                  <ProductGrid 
+                    products={filteredProducts} 
+                    loading={loading}
+                    error={error}
+                    viewTitle={getViewTitle()}
+                  />
+                </main>
+                <Footer />
+              </>
+            } />
+          </Routes>
+        </div>
+      </ErrorBoundary>
     </Router>
   );
 }

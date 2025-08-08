@@ -6,12 +6,13 @@ import { Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 interface ProductGridProps {
   products: Product[];
   loading: boolean;
+  error?: string | null;
   viewTitle: string;
 }
 
 const PRODUCTS_PER_PAGE = 12;
 
-const ProductGrid: React.FC<ProductGridProps> = ({ products, loading, viewTitle }) => {
+const ProductGrid: React.FC<ProductGridProps> = ({ products, loading, error, viewTitle }) => {
   const [currentPage, setCurrentPage] = useState(1);
 
   // Reset page when products change
@@ -60,6 +61,26 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, loading, viewTitle 
         <div className="text-center">
           <Loader2 className="animate-spin text-primary-600 mx-auto mb-4" size={48} />
           <p className="text-charcoal-600 text-lg">Parfümler yükleniyor...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="text-center text-red-600 font-bold text-lg">
+          {error}
+        </div>
+      </div>
+    );
+  }
+
+  if (!products || !Array.isArray(products)) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="text-center text-red-600 font-bold text-lg">
+          Ürünler yüklenemedi. Lütfen sayfayı yenileyin.
         </div>
       </div>
     );
