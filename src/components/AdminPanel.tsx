@@ -14,7 +14,7 @@ import { useSettings } from '../hooks/useSettings';
 import { useForum } from '../hooks/useForum';
 import { onAuthStateChanged, signOut, User as FirebaseUser } from 'firebase/auth';
 import { auth } from '../lib/firebase';
-import type { Product, SiteSettings, User, ForumPost } from '../types';
+import type { Product, SiteSettings, User, ForumPost, StockHistory } from '../types';
 import { ImageUtils } from '../utils/imageUtils';
 
 export const AdminPanel: React.FC = () => {
@@ -100,6 +100,11 @@ export const AdminPanel: React.FC = () => {
   const [salePriceType, setSalePriceType] = useState<'site' | 'manual'>('site');
   const [manualSalePrice, setManualSalePrice] = useState<number>(0);
 
+  // Satış/ciro için tarih aralığı ve CSV export state'leri
+  const [salesStartDate, setSalesStartDate] = useState<string>('');
+  const [salesEndDate, setSalesEndDate] = useState<string>('');
+  const [filteredSales, setFilteredSales] = useState<StockHistory[]>([]);
+
   // Firebase Auth state listener
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -183,6 +188,17 @@ export const AdminPanel: React.FC = () => {
       });
     }
   }, [settings]);
+
+  useEffect(() => {
+    const fetchSales = async () => {
+      const sales = await StockService.getSalesHistory({
+        startDate: salesStartDate ? new Date(salesStartDate).toISOString() : undefined,
+        endDate: salesEndDate ? new Date(salesEndDate).toISOString() : undefined
+      });
+      setFilteredSales(sales);
+    };
+    fetchSales();
+  }, [salesStartDate, salesEndDate]);
 
   const loadInitialData = async () => {
     setIsLoading(true);
@@ -670,6 +686,29 @@ export const AdminPanel: React.FC = () => {
     'Parfüm İnceleme Rehberi',
     'Evde Parfüm Yapımı'
   ];
+
+  // CSV export fonksiyonu
+  const exportSalesToCSV = () => {
+    if (!filteredSales.length) return;
+    const header = ['Tarih', 'Ürün ID', 'Adet', 'Fiyat Tipi', 'Satış Fiyatı', 'Açıklama', 'Admin'];
+    const rows = filteredSales.map(sale => [
+      sale.date,
+      sale.productId,
+      sale.quantity,
+      sale.salePriceType || 'site',
+      sale.salePriceType === 'manual' ? sale.manualSalePrice : '',
+      sale.reason,
+      sale.adminEmail || ''
+    ]);
+    const csvContent = [header, ...rows].map(e => e.join(',')).join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'satislar.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   if (isLoading || settingsLoading || postsLoading) {
     return (
@@ -1528,6 +1567,19 @@ export const AdminPanel: React.FC = () => {
                     Stok Verilerini Yenile
                   </button>
                 </div>
+
+                {activeTab === 'stock' && (
+                  <div className="mb-4 flex flex-col md:flex-row gap-2 items-start md:items-center">
+                    <label className="text-sm">Başlangıç Tarihi:
+                      <input type="date" value={salesStartDate} onChange={e => setSalesStartDate(e.target.value)} className="ml-2 border px-2 py-1 rounded" />
+                    </label>
+                    <label className="text-sm">Bitiş Tarihi:
+                      <input type="date" value={salesEndDate} onChange={e => setSalesEndDate(e.target.value)} className="ml-2 border px-2 py-1 rounded" />
+                    </label>
+                    <button onClick={exportSalesToCSV} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 ml-2">CSV Olarak İndir</button>
+                    <span className="text-xs text-gray-500 ml-2">Filtreli satış kaydı: {filteredSales.length}</span>
+                  </div>
+                )}
               </div>
             )}
 

@@ -292,4 +292,27 @@ export class StockService {
       return { lowStock: [], outOfStock: [], highStock: [] };
     }
   }
+
+  /**
+   * Belirli bir tarih aralığında veya tüm zamanlarda yapılan satış (sale) stok hareketlerini getirir
+   */
+  static async getSalesHistory({ startDate, endDate }: { startDate?: string; endDate?: string } = {}): Promise<StockHistory[]> {
+    try {
+      let q = query(
+        collection(db, this.historyCollection),
+        where('type', '==', 'sale')
+      );
+      if (startDate) {
+        q = query(q, where('date', '>=', startDate));
+      }
+      if (endDate) {
+        q = query(q, where('date', '<=', endDate));
+      }
+      const snapshot = await getDocs(q);
+      return snapshot.docs.map(doc => doc.data() as StockHistory);
+    } catch (error) {
+      console.error('❌ Satış geçmişi alma hatası:', error);
+      return [];
+    }
+  }
 } 
