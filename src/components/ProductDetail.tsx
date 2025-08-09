@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ShoppingBag, Package, Star, Plus, Minus, ChevronLeft, ChevronRight, User, Mail, Phone, CreditCard } from 'lucide-react';
+import { ArrowLeft, ShoppingBag, Package, Star, Plus, Minus, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Product } from '../types';
 import { useProducts } from '../hooks/useProducts';
 import { useCart } from '../hooks/useCart';
 
-import { ShopierService } from '../services/shopierService';
 import SEO from './SEO';
 import OptimizedImage from './OptimizedImage';
 
@@ -17,18 +16,7 @@ const ProductDetail: React.FC = () => {
   const [product, setProduct] = useState<Product | null>(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
-  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-  const [showCustomerForm, setShowCustomerForm] = useState(false);
-  const [customerInfo, setCustomerInfo] = useState({
-    name: '',
-    email: '',
-    phone: ''
-  });
-  const [formErrors, setFormErrors] = useState<{
-    name?: string;
-    email?: string;
-    phone?: string;
-  }>({});
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
 
   useEffect(() => {
     if (id && products.length > 0) {
@@ -53,8 +41,11 @@ const ProductDetail: React.FC = () => {
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : 0;
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
+    if (isAddingToCart) return;
+    
     try {
+      setIsAddingToCart(true);
       addToCart(product, quantity);
       
       // Başarı bildirimi
@@ -71,14 +62,8 @@ const ProductDetail: React.FC = () => {
     } catch (error) {
       console.error('Sepete ekleme hatası:', error);
       alert('Ürün sepete eklenirken bir hata oluştu.');
-    }
-  };
-
-  const handleInputChange = (field: keyof typeof customerInfo, value: string) => {
-    setCustomerInfo(prev => ({ ...prev, [field]: value }));
-    // Clear error when user starts typing
-    if (formErrors[field]) {
-      setFormErrors(prev => ({ ...prev, [field]: undefined }));
+    } finally {
+      setIsAddingToCart(false);
     }
   };
 
@@ -336,14 +321,21 @@ const ProductDetail: React.FC = () => {
               <div className="space-y-3">
                 <button
                   onClick={handleAddToCart}
-                  disabled={!product.inStock}
+                  disabled={!product.inStock || isAddingToCart}
                   className="w-full bg-primary-600 text-white py-4 rounded-lg font-medium hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
-                  <ShoppingBag size={20} />
-                  Sepete Ekle
+                  {isAddingToCart ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      Sepete Ekleniyor...
+                    </>
+                  ) : (
+                    <>
+                      <ShoppingBag size={20} />
+                      Sepete Ekle
+                    </>
+                  )}
                 </button>
-
-                {/* Removed Hemen Satın Al button */}
               </div>
 
               {/* Stock Status */}
@@ -359,8 +351,6 @@ const ProductDetail: React.FC = () => {
         </div>
       </div>
     </div>
-    
-    {/* Removed Customer Form Modal */}
     </>
   );
 };

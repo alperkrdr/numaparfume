@@ -5,6 +5,9 @@ export const AdminConfig = {
     'admin@numaparfume.com',      // Varsayılan admin
     'numa@admin.com',             // Alternatif admin
     'admin@email.com',            // Firebase'den oluşturulan admin e-posta
+    'test@admin.com',             // Test admin e-posta
+    'admin@test.com',             // Test admin e-posta 2
+    'test@test.com',              // Test admin e-posta 3
   ],
   
   // Admin panel ayarları

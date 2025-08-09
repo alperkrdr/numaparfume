@@ -1,30 +1,15 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Product } from '../types';
-import { ShoppingBag, Star, Package, Plus, User, Mail, Phone, CreditCard } from 'lucide-react';
+import { ShoppingBag, Star, Package, Plus } from 'lucide-react';
 import { useCart } from '../hooks/useCart';
-import { ShopierService } from '../services/shopierService';
 import OptimizedImage from './OptimizedImage';
 
 interface ProductCardProps {
   product: Product;
 }
 
-interface CustomerInfo {
-  name: string;
-  email: string;
-  phone: string;
-}
-
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
-  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-  const [showCustomerForm, setShowCustomerForm] = useState(false);
-  const [customerInfo, setCustomerInfo] = useState<CustomerInfo>({
-    name: '',
-    email: '',
-    phone: ''
-  });
-  const [formErrors, setFormErrors] = useState<Partial<CustomerInfo>>({});
   const { addToCart } = useCart();
   const navigate = useNavigate();
 
@@ -32,64 +17,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     navigate(`/product/${product.id}`);
   };
 
-  // Satın alma işlemini gerçekleştir
-  const processPurchase = async () => {
-    if (isProcessingPayment) return;
-    
-    // Form validasyonu
-    const errors: Partial<CustomerInfo> = {};
-    if (!customerInfo.name.trim()) errors.name = 'Ad soyad gereklidir';
-    if (!customerInfo.email.trim()) errors.email = 'E-posta gereklidir';
-    if (!customerInfo.phone.trim()) errors.phone = 'Telefon numarası gereklidir';
-    
-    if (Object.keys(errors).length > 0) {
-      setFormErrors(errors);
-      return;
-    }
-    
-    setIsProcessingPayment(true);
-    
-    try {
-      const paymentUrl = await ShopierService.createSingleProductPayment(
-        {
-          name: product.name,
-          price: product.price,
-          currency: 'TRY',
-          description: product.description,
-          image_url: product.image,
-          category: product.category
-        },
-        {
-          name: customerInfo.name,
-          email: customerInfo.email,
-          phone: customerInfo.phone
-        }
-      );
-      
-      // Ödeme sayfasına yönlendir
-      window.location.href = paymentUrl;
-      
-    } catch (error) {
-      console.error('Ödeme hatası:', error);
-      alert('Ödeme işlemi başlatılırken bir hata oluştu. Lütfen tekrar deneyin.');
-    } finally {
-      setIsProcessingPayment(false);
-    }
-  };
-
-  const handleDirectPurchase = async () => {
-    setShowCustomerForm(true);
-  };
-
-  const validateForm = () => {
-    const errors: Partial<CustomerInfo> = {};
-    if (!customerInfo.name.trim()) errors.name = 'Ad soyad gereklidir';
-    if (!customerInfo.email.trim()) errors.email = 'E-posta gereklidir';
-    if (!customerInfo.phone.trim()) errors.phone = 'Telefon numarası gereklidir';
-    return errors;
-  };
-
   const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -114,7 +43,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     
     try {
       setIsAddingToCart(true);
-      await addToCart(product.id, 1);
+      await addToCart(product, 1);
       console.log('✅ addToCart fonksiyonu çağrıldı');
       
       // Başarı bildirimi
@@ -139,162 +68,41 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     }
   };
 
-  const handleInputChange = (field: keyof CustomerInfo, value: string) => {
-    setCustomerInfo(prev => ({ ...prev, [field]: value }));
-    // Clear error when user starts typing
-    if (formErrors[field]) {
-      setFormErrors(prev => ({ ...prev, [field]: undefined }));
-    }
+  const handleImageError = () => {
+    console.error('❌ Görsel yüklenemedi:', product.image);
+    setImageError(true);
   };
 
   const discountPercentage = product.originalPrice 
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : 0;
 
-  if (showCustomerForm) {
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col">
-          {/* Header */}
-          <div className="p-6 border-b border-gray-200">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-serif font-bold text-charcoal-900">
-                Bilgilerinizi Girin
-              </h2>
-              <button
-                onClick={() => setShowCustomerForm(false)}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                ✕
-              </button>
-            </div>
-          </div>
-
-          {/* Form Content */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-4">
-            <p className="text-gray-600 text-sm mb-6">
-              Ödeme işlemini tamamlamak için lütfen bilgilerinizi girin.
-            </p>
-
-            {/* Name Field */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                <User size={16} className="inline mr-1" />
-                Ad Soyad *
-              </label>
-              <input
-                type="text"
-                value={customerInfo.name}
-                onChange={(e) => handleInputChange('name', e.target.value)}
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 ${
-                  formErrors.name ? 'border-red-300' : 'border-gray-300'
-                }`}
-                placeholder="Adınız ve soyadınız"
-              />
-              {formErrors.name && (
-                <p className="text-red-500 text-xs mt-1">{formErrors.name}</p>
-              )}
-            </div>
-
-            {/* Email Field */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                <Mail size={16} className="inline mr-1" />
-                E-posta *
-              </label>
-              <input
-                type="email"
-                value={customerInfo.email}
-                onChange={(e) => handleInputChange('email', e.target.value)}
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 ${
-                  formErrors.email ? 'border-red-300' : 'border-gray-300'
-                }`}
-                placeholder="ornek@email.com"
-              />
-              {formErrors.email && (
-                <p className="text-red-500 text-xs mt-1">{formErrors.email}</p>
-              )}
-            </div>
-
-            {/* Phone Field */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                <Phone size={16} className="inline mr-1" />
-                Telefon Numarası *
-              </label>
-              <input
-                type="tel"
-                value={customerInfo.phone}
-                onChange={(e) => handleInputChange('phone', e.target.value)}
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 ${
-                  formErrors.phone ? 'border-red-300' : 'border-gray-300'
-                }`}
-                placeholder="0512 345 67 89"
-              />
-              {formErrors.phone && (
-                <p className="text-red-500 text-xs mt-1">{formErrors.phone}</p>
-              )}
-            </div>
-
-            {/* Product Summary */}
-            <div className="bg-gray-50 rounded-lg p-4 mt-6">
-              <h3 className="font-semibold text-gray-900 mb-3">Ürün Bilgisi</h3>
-              <div className="flex items-center gap-3">
-                <img
-                  src={product.image}
-                  alt={product.name}
-                  className="w-16 h-16 rounded-lg object-cover"
-                />
-                <div className="flex-1">
-                  <h4 className="font-medium text-gray-900">{product.name}</h4>
-                  <p className="text-sm text-gray-600">{product.brand} • {product.size}</p>
-                  <p className="text-lg font-bold text-purple-600">₺{product.price}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Footer */}
-          <div className="p-6 border-t border-gray-200 space-y-3">
-            <button
-              onClick={processPurchase}
-              disabled={isProcessingPayment}
-              className="w-full bg-primary-600 text-white py-3 rounded-lg hover:bg-primary-700 transition-colors font-medium disabled:opacity-50 flex items-center justify-center gap-2"
-            >
-              {isProcessingPayment ? (
-                'İşleniyor...'
-              ) : (
-                <>
-                  <CreditCard size={18} />
-                  ₺{product.price} Öde
-                </>
-              )}
-            </button>
-
-            <button
-              onClick={() => setShowCustomerForm(false)}
-              className="w-full bg-gray-200 text-gray-700 py-2 rounded-lg hover:bg-gray-300 transition-colors text-sm"
-            >
-              Geri Dön
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden border border-gray-100 hover:border-primary-200 transform hover:-translate-y-2">
       {/* Image Container */}
       <div className="relative overflow-hidden bg-gray-50 cursor-pointer" onClick={handleProductClick}>
-        <OptimizedImage
-          src={product.image}
-          alt={product.name}
-          width={300}
-          height={300}
-          className="w-full h-64 object-cover rounded-xl bg-gray-100"
-          loading="lazy"
-        />
+        {!imageError ? (
+          <OptimizedImage
+            src={product.image}
+            alt={product.name}
+            width={300}
+            height={300}
+            className="w-full h-64 object-cover rounded-xl bg-gray-100"
+            loading="lazy"
+            onError={handleImageError}
+          />
+        ) : (
+          <div className="w-full h-64 bg-gray-200 rounded-xl flex items-center justify-center">
+            <div className="text-center text-gray-500">
+              <div className="w-12 h-12 mx-auto mb-2">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <p className="text-sm">Görsel yüklenemedi</p>
+            </div>
+          </div>
+        )}
         
         {/* Badges */}
         <div className="absolute top-4 left-4 flex flex-col gap-2">
@@ -404,16 +212,21 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         {/* Action Buttons */}
         <div className="flex gap-2">
           <button
-            onClick={handleDirectPurchase}
-            disabled={!product.inStock || (product.stockQuantity || 0) === 0}
+            onClick={handleAddToCart}
+            disabled={!product.inStock || (product.stockQuantity || 0) === 0 || isAddingToCart}
             className="flex-1 bg-gradient-to-r from-primary-600 to-primary-700 text-white py-3 px-4 rounded-lg hover:from-primary-700 hover:to-primary-800 transition-all duration-300 font-medium text-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
           >
             {!product.inStock || (product.stockQuantity || 0) === 0 ? (
               'Tükendi'
+            ) : isAddingToCart ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                Ekleniyor...
+              </>
             ) : (
               <>
                 <ShoppingBag size={16} />
-                Hemen Satın Al
+                Sepete Ekle
               </>
             )}
           </button>
