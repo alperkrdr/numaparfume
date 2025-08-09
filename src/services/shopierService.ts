@@ -60,10 +60,10 @@ interface ShopierFormData {
 }
 
 export class ShopierService {
-  // Gerçek Shopier API bilgileri
-  private static readonly API_KEY = '107a7821174596da16176ffe2138b709';
-  private static readonly API_SECRET = '952d2f8f485d0d74391343c1606aa4cb';
-  private static readonly WEBSITE_INDEX = 1;
+  // Shopier API bilgileri .env dosyasından okunur
+  private static readonly API_KEY = import.meta.env.VITE_SHOPIER_API_KEY || '';
+  private static readonly API_SECRET = import.meta.env.VITE_SHOPIER_SECRET_KEY || '';
+  private static readonly WEBSITE_INDEX = parseInt(import.meta.env.VITE_SHOPIER_WEBSITE_INDEX || '1');
   
   // Shopier ödeme URL'i
   private static readonly PAYMENT_URL = 'https://www.shopier.com/ShowProduct/api_pay4.php';
