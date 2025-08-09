@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Plus, Edit, Trash2, Save, X, Eye, EyeOff, Upload, 
-  Settings, Bot, RefreshCw, LogOut, Users, Package, 
-  TrendingUp, AlertTriangle, BarChart3, History
+  Plus, Edit, Trash2, Save, X, Eye, EyeOff, Upload,
+  Settings, Bot, RefreshCw, LogOut, Users, Package,
+  TrendingUp, AlertTriangle, BarChart3, History, ShoppingBag
 } from 'lucide-react';
 import { AuthService } from '../services/authService';
 import { ProductService } from '../services/productService';
