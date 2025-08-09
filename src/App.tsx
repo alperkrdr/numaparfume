@@ -99,10 +99,27 @@ function App() {
     <Router future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
       <div className="min-h-screen bg-white">
         <Routes>
+          {/* Admin Panel Route */}
           <Route path="/admin" element={
             <Suspense fallback={<LoadingSpinner />}>
               <AdminPanel />
             </Suspense>
+          } />
+          
+          {/* Admin Test Route - for debugging */}
+          <Route path="/admin-test" element={
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+              <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+                <h1 className="text-2xl font-bold text-gray-900 mb-4">Admin Panel Test</h1>
+                <p className="text-gray-600 mb-4">Admin panel erişimi test ediliyor...</p>
+                <a 
+                  href="/admin" 
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Admin Paneline Git
+                </a>
+              </div>
+            </div>
           } />
           
           {/* Product Detail Page */}
