@@ -33,11 +33,61 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   };
 
   // Satın alma işlemini gerçekleştir
-  // const processPurchase = async () => { ... } // KALDIR
-  // const handleDirectPurchase = async () => { ... } // KALDIR
-  // const validateForm = () => { ... } // KALDIR
-  // const showCustomerForm ile ilgili state ve kodlar KALDIR
-  // Sadece Sepete Ekle butonu kalsın
+  const processPurchase = async () => {
+    if (isProcessingPayment) return;
+    
+    // Form validasyonu
+    const errors: Partial<CustomerInfo> = {};
+    if (!customerInfo.name.trim()) errors.name = 'Ad soyad gereklidir';
+    if (!customerInfo.email.trim()) errors.email = 'E-posta gereklidir';
+    if (!customerInfo.phone.trim()) errors.phone = 'Telefon numarası gereklidir';
+    
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      return;
+    }
+    
+    setIsProcessingPayment(true);
+    
+    try {
+      const paymentUrl = await ShopierService.createSingleProductPayment(
+        {
+          name: product.name,
+          price: product.price,
+          currency: 'TRY',
+          description: product.description,
+          image_url: product.image,
+          category: product.category
+        },
+        {
+          name: customerInfo.name,
+          email: customerInfo.email,
+          phone: customerInfo.phone
+        }
+      );
+      
+      // Ödeme sayfasına yönlendir
+      window.location.href = paymentUrl;
+      
+    } catch (error) {
+      console.error('Ödeme hatası:', error);
+      alert('Ödeme işlemi başlatılırken bir hata oluştu. Lütfen tekrar deneyin.');
+    } finally {
+      setIsProcessingPayment(false);
+    }
+  };
+
+  const handleDirectPurchase = async () => {
+    setShowCustomerForm(true);
+  };
+
+  const validateForm = () => {
+    const errors: Partial<CustomerInfo> = {};
+    if (!customerInfo.name.trim()) errors.name = 'Ad soyad gereklidir';
+    if (!customerInfo.email.trim()) errors.email = 'E-posta gereklidir';
+    if (!customerInfo.phone.trim()) errors.phone = 'Telefon numarası gereklidir';
+    return errors;
+  };
 
   const [isAddingToCart, setIsAddingToCart] = useState(false);
 
