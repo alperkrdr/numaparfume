@@ -91,6 +91,7 @@ export class ShopierService {
       name: string;
       email: string;
       phone?: string;
+      address?: string;
     },
     discountInfo?: {
       discountAmount: number;
@@ -133,9 +134,9 @@ export class ShopierService {
         buyer_surname: buyerSurname,
         buyer_email: buyerInfo.email,
         buyer_phone: buyerInfo.phone || '5555555555',
-        billing_address: 'Müşteri Adresi',
-        billing_city: 'İstanbul',
-        billing_country: 'Türkiye',
+        billing_address: buyerInfo.address || 'Adres belirtilmedi',
+        billing_city: 'İstanbul', // Varsayılan, gerekirse formdan alınabilir
+        billing_country: 'Türkiye', // Varsayılan
         billing_postcode: '34000',
         total_order_value: totalAmount.toFixed(2),
         currency: 'TRY',

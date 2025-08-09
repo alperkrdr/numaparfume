@@ -1284,7 +1284,7 @@ export const AdminPanel: React.FC = () => {
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-green-600 text-sm font-medium">Toplam Ciro</p>
-                            <p className="text-2xl font-bold text-green-900">₺{stockAnalytics.totalRevenue?.toLocaleString('tr-TR') || 0}</p>
+                            <p className="text-2xl font-bold text-green-900">₺{(stockAnalytics.totalRevenue || 0).toLocaleString('tr-TR')}</p>
                           </div>
                           <BarChart3 className="w-8 h-8 text-green-600" />
                         </div>
@@ -1311,7 +1311,7 @@ export const AdminPanel: React.FC = () => {
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-orange-600 text-sm font-medium">Ort. Sipariş Değeri</p>
-                            <p className="text-2xl font-bold text-orange-900">₺{stockAnalytics.averageOrderValue?.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || 0}</p>
+                            <p className="text-2xl font-bold text-orange-900">₺{(stockAnalytics.averageOrderValue || 0).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                           </div>
                           <TrendingUp className="w-8 h-8 text-orange-600" />
                         </div>

@@ -3,13 +3,14 @@ import { useCart } from '../hooks/useCart';
 import { useSettings } from '../hooks/useSettings';
 import { ShopierService } from '../services/shopierService';
 import { CampaignService } from '../services/campaignService';
-import { User, Mail, Phone, CreditCard, ShoppingBag, Tag, Gift } from 'lucide-react';
+import { User, Mail, Phone, Home, CreditCard, ShoppingBag, Tag, Gift } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface CustomerInfo {
   name: string;
   email: string;
   phone: string;
+  address: string;
 }
 
 const CheckoutPage = () => {
@@ -20,7 +21,8 @@ const CheckoutPage = () => {
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo>({
     name: '',
     email: '',
-    phone: ''
+    phone: '',
+    address: ''
   });
   const [formErrors, setFormErrors] = useState<Partial<CustomerInfo>>({});
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
@@ -42,6 +44,9 @@ const CheckoutPage = () => {
       errors.phone = 'Telefon numarası gerekli';
     } else if (!/^[\d\s\-\+\(\)]{10,}$/.test(customerInfo.phone.replace(/\s/g, ''))) {
       errors.phone = 'Geçerli bir telefon numarası girin';
+    }
+    if (!customerInfo.address.trim()) {
+      errors.address = 'Adres gerekli';
     }
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -99,7 +104,8 @@ const CheckoutPage = () => {
         {
           name: customerInfo.name,
           email: customerInfo.email,
-          phone: customerInfo.phone
+          phone: customerInfo.phone,
+          address: customerInfo.address
         },
         campaignData?.campaignApplied && campaignData.campaignTitle ? {
           discountAmount: campaignData.discountAmount,
@@ -167,6 +173,20 @@ const CheckoutPage = () => {
                   placeholder="0512 345 67 89"
                 />
                 {formErrors.phone && <p className="text-red-500 text-xs mt-1">{formErrors.phone}</p>}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Adres *</label>
+                <textarea
+                  value={customerInfo.address}
+                  onChange={(e) => handleInputChange('address', e.target.value)}
+                  rows={3}
+                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 ${
+                    formErrors.address ? 'border-red-400' : 'border-gray-300'
+                  }`}
+                  placeholder="Teslimat adresi"
+                />
+                {formErrors.address && <p className="text-red-500 text-xs mt-1">{formErrors.address}</p>}
               </div>
 
               <button
