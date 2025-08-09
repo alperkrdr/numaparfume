@@ -68,6 +68,9 @@ export class ShopierService {
   // Shopier ödeme URL'i
   private static readonly PAYMENT_URL = 'https://www.shopier.com/ShowProduct/api_pay4.php';
   
+  // API Base URL
+  private static readonly API_BASE_URL = 'https://www.shopier.com/api';
+  
   private static readonly SITE_URL = typeof window !== 'undefined' && window.location.hostname === 'localhost' 
     ? `${window.location.protocol}//${window.location.host}`
     : 'https://numaparfume.com';
