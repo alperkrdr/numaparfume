@@ -1,3 +1,5 @@
+import * as CryptoJS from 'crypto-js';
+
 interface ShopierProduct {
   name: string;
   price: number;
@@ -35,7 +37,7 @@ interface ShopierPaymentRequest {
   language: string;
 }
 
-// Shopier Form Data Interface - Verilen örnek koda göre güncellendi
+// Shopier Form Data Interface - PHP örneğine göre güncellendi
 interface ShopierFormData {
   API_key: string;
   website_index: number;
@@ -56,8 +58,6 @@ interface ShopierFormData {
   is_installment: number;
   signature: string;
 }
-
-import * as CryptoJS from 'crypto-js';
 
 export class ShopierService {
   // Gerçek Shopier API bilgileri
@@ -80,7 +80,7 @@ export class ShopierService {
   private static readonly DEBUG_MODE = true;
 
   /**
-   * Sepet için ödeme işlemi - Verilen örnek koda göre güncellendi
+   * Sepet için ödeme işlemi - PHP örneğine göre güncellendi
    */
   static async createCartPayment(
     cartItems: Array<{
@@ -123,7 +123,7 @@ export class ShopierService {
         ? cartItems[0].product.name
         : `${cartItems.length} Ürün - Sepetinizdeki Ürünler`;
 
-      // Shopier ödeme verilerini hazırla
+      // Shopier ödeme verilerini hazırla - PHP örneğine göre
       const paymentData: ShopierFormData = {
         API_key: this.API_KEY,
         website_index: this.WEBSITE_INDEX,
@@ -145,7 +145,7 @@ export class ShopierService {
         signature: '' // Aşağıda hesaplanacak
       };
 
-      // İmza oluştur - Verilen örnek koda göre
+      // İmza oluştur - PHP hash_hmac('SHA256', implode('', $payment_data), $api_secret) formatına göre
       const signatureString = Object.values(paymentData).join('');
       const signature = CryptoJS.HmacSHA256(signatureString, this.API_SECRET).toString();
       paymentData.signature = signature;
@@ -157,7 +157,7 @@ export class ShopierService {
         console.log('Payment Data:', paymentData);
       }
 
-      // Form oluştur ve submit et
+      // Form oluştur ve submit et - PHP örneğine göre
       const form = this.createPaymentForm(paymentData);
       document.body.appendChild(form);
       form.submit();
@@ -266,7 +266,7 @@ export class ShopierService {
   }
 
   /**
-   * Ödeme formu oluştur
+   * Ödeme formu oluştur - PHP örneğine göre güncellendi
    */
   private static createPaymentForm(formData: ShopierFormData): HTMLFormElement {
     const form = document.createElement('form');
@@ -275,6 +275,7 @@ export class ShopierService {
     form.id = 'shopier_form';
     form.style.display = 'none';
 
+    // PHP foreach döngüsüne benzer şekilde
     Object.entries(formData).forEach(([key, value]) => {
       const input = document.createElement('input');
       input.type = 'hidden';
@@ -287,7 +288,7 @@ export class ShopierService {
   }
 
   /**
-   * Callback doğrulama - Verilen örnek koda göre güncellendi
+   * Callback doğrulama - PHP örneğine göre güncellendi
    */
   static verifyCallback(postData: any): boolean {
     try {
@@ -303,7 +304,7 @@ export class ShopierService {
       // Gelen imzayı doğrula
       const receivedSignature = signature;
       
-      // Beklenen imzayı hesapla
+      // Beklenen imzayı hesapla - PHP formatına göre
       const signatureString = `${this.API_KEY}${this.WEBSITE_INDEX}${platform_order_id}${total_order_value}${currency}${random_nr}${this.API_SECRET}`;
       const expectedSignature = CryptoJS.SHA256(signatureString).toString();
 

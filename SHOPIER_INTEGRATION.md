@@ -1,206 +1,290 @@
-# Shopier Entegrasyonu
+# 🛒 Shopier Entegrasyonu - PHP Formatına Uygun
 
-Bu dokümantasyon, Shopier ödeme sistemi entegrasyonunu açıklar.
+## 📋 Genel Bakış
 
-## 🚀 Özellikler
+Shopier ödeme entegrasyonu PHP örneğine uygun şekilde güncellenmiştir. Sistem artık PHP'deki `hash_hmac('SHA256', implode('', $payment_data), $api_secret)` formatını kullanmaktadır.
 
-- ✅ Sepet toplam tutarını Shopier üzerinden ödeme alma
-- ✅ Kampanya indirimlerini destekleme
-- ✅ Güvenli imza doğrulaması
-- ✅ Callback işleme
-- ✅ Test modu desteği
+## 🔧 Teknik Detaylar
 
-## 📋 Gereksinimler
+### PHP Örneği Formatı
+```php
+<?php
+$api_key = 'SHOPIER_API_KEY';
+$api_secret = 'SHOPIER_API_SECRET';
 
-### API Bilgileri
+$buyer_name = 'Ahmet Yılmaz';
+$buyer_email = 'ahmet@example.com';
+$buyer_phone = '05001234567';
+$buyer_address = 'İstanbul, Türkiye';
+
+$order_id = uniqid();
+$product_name = 'Sepetinizdeki Ürünler';
+$price = 500.00;
+$currency = 'TRY';
+
+$payment_data = [
+    'API_key' => $api_key,
+    'website_index' => '1',
+    'platform_order_id' => $order_id,
+    'product_name' => $product_name,
+    'buyer_name' => $buyer_name,
+    'buyer_surname' => '',
+    'buyer_email' => $buyer_email,
+    'buyer_phone' => $buyer_phone,
+    'billing_address' => $buyer_address,
+    'billing_city' => 'İstanbul',
+    'billing_country' => 'Türkiye',
+    'billing_postcode' => '34000',
+    'total_order_value' => $price,
+    'currency' => $currency,
+    'callback_url' => 'https://seninsite.com/shopier-callback.php',
+    'payment_channel' => 'web',
+    'is_installment' => 0
+];
+
+$signature = hash_hmac('SHA256', implode('', $payment_data), $api_secret);
+
+$payment_data['signature'] = $signature;
+?>
+
+<form method="post" action="https://www.shopier.com/ShowProduct/api_pay4.php" id="shopier_form">
+<?php foreach ($payment_data as $key => $value): ?>
+    <input type="hidden" name="<?= htmlspecialchars($key) ?>" value="<?= htmlspecialchars($value) ?>">
+<?php endforeach; ?>
+</form>
+
+<script>
+    document.getElementById('shopier_form').submit();
+</script>
+```
+
+### JavaScript Uyarlaması
+
 ```typescript
-const API_KEY = '107a7821174596da16176ffe2138b709';
-const API_SECRET = '952d2f8f485d0d74391343c1606aa4cb';
-const WEBSITE_INDEX = 1;
-```
-
-### Endpoint
-```
-https://www.shopier.com/ShowProduct/api_pay4.php
-```
-
-## 🔧 Kurulum
-
-### 1. ShopierService Kullanımı
-
-```typescript
-import { ShopierService } from '../services/shopierService';
-
-// Sepet ödeme işlemi
-const paymentUrl = await ShopierService.createCartPayment(
-  cartItems, // Sepet ürünleri
-  {
-    name: user.name,
-    email: user.email,
-    phone: user.phone
-  },
-  discountInfo // Opsiyonel kampanya bilgisi
-);
-```
-
-### 2. Callback İşleme
-
-```typescript
-// PaymentCallback.tsx içinde
-const isValid = ShopierService.verifyCallback(callbackData);
-```
-
-## 📝 Ödeme Akışı
-
-### 1. Sepet Hesaplama
-```typescript
-// Toplam tutarı hesapla
-let totalAmount = cartItems.reduce((sum, item) => 
-  sum + (item.product.price * item.quantity), 0
-);
-
-// İndirim varsa uygula
-if (discountInfo && discountInfo.discountAmount > 0) {
-  totalAmount -= discountInfo.discountAmount;
-}
-```
-
-### 2. Shopier Form Hazırlama
-```typescript
-const paymentData = {
-  API_key: API_KEY,
-  website_index: WEBSITE_INDEX,
+// Shopier ödeme verilerini hazırla - PHP örneğine göre
+const paymentData: ShopierFormData = {
+  API_key: this.API_KEY,
+  website_index: this.WEBSITE_INDEX,
   platform_order_id: orderId,
   product_name: productName,
   buyer_name: buyerName,
   buyer_surname: buyerSurname,
   buyer_email: buyerInfo.email,
-  buyer_phone: buyerInfo.phone,
+  buyer_phone: buyerInfo.phone || '5555555555',
   billing_address: 'Müşteri Adresi',
   billing_city: 'İstanbul',
   billing_country: 'Türkiye',
   billing_postcode: '34000',
   total_order_value: totalAmount.toFixed(2),
   currency: 'TRY',
-  callback_url: `${SITE_URL}/payment-callback`,
+  callback_url: `${this.SITE_URL}/payment-callback`,
   payment_channel: 'web',
   is_installment: 0,
   signature: '' // Aşağıda hesaplanacak
 };
-```
 
-### 3. İmza Oluşturma
-```typescript
-// İmza oluştur - Verilen örnek koda göre
+// İmza oluştur - PHP hash_hmac('SHA256', implode('', $payment_data), $api_secret) formatına göre
 const signatureString = Object.values(paymentData).join('');
-const signature = CryptoJS.HmacSHA256(signatureString, API_SECRET).toString();
+const signature = CryptoJS.HmacSHA256(signatureString, this.API_SECRET).toString();
 paymentData.signature = signature;
 ```
 
-### 4. Form Submit
+## 🚀 Kullanım
+
+### 1. Sepet Ödeme İşlemi
+
 ```typescript
-// Form oluştur ve submit et
-const form = this.createPaymentForm(paymentData);
-document.body.appendChild(form);
-form.submit();
+import { ShopierService } from '../services/shopierService';
+
+// Sepet verilerini hazırla
+const cartItems = [
+  {
+    product: {
+      name: 'Chanel No. 5 Benzeri',
+      price: 299.99,
+      currency: 'TRY',
+      description: 'Klasik parfüm',
+      image_url: 'https://example.com/image.jpg',
+      category: 'kadın'
+    },
+    quantity: 2
+  }
+];
+
+// Müşteri bilgileri
+const buyerInfo = {
+  name: 'Ahmet Yılmaz',
+  email: 'ahmet@example.com',
+  phone: '05001234567'
+};
+
+// Kampanya indirimi (opsiyonel)
+const discountInfo = {
+  discountAmount: 50,
+  campaignTitle: 'Yaz Kampanyası'
+};
+
+// Ödeme işlemini başlat
+await ShopierService.createCartPayment(
+  cartItems,
+  buyerInfo,
+  discountInfo
+);
+```
+
+### 2. Tek Ürün Ödeme İşlemi
+
+```typescript
+const product = {
+  name: 'Test Parfüm',
+  price: 299.99,
+  currency: 'TRY',
+  description: 'Test ürün',
+  image_url: 'https://example.com/image.jpg',
+  category: 'kadın'
+};
+
+await ShopierService.createSingleProductPayment(
+  product,
+  buyerInfo
+);
+```
+
+## 🧪 Test
+
+### Test Sayfası
+- URL: `http://localhost:3000/shopier-test`
+- Özellikler:
+  - Test sepet verisi
+  - Kampanya indirimi simülasyonu
+  - Gerçek Shopier formu oluşturma
+  - Console'da debug bilgileri
+
+### Test Senaryoları
+
+#### 1. Basit Test
+```bash
+# Test sayfasına git
+curl http://localhost:3000/shopier-test
+
+# Test verilerini gir ve "Test Ödeme" butonuna tıkla
+# Console'da debug bilgilerini kontrol et
+```
+
+#### 2. Sepet Testi
+```bash
+# Ana sayfaya git
+curl http://localhost:3000/
+
+# Ürün ekle → Sepete git → Ödemeye geç
+# Müşteri bilgilerini gir ve ödeme yap
 ```
 
 ## 🔐 Güvenlik
 
-### Callback Doğrulama
+### İmza Doğrulama
 ```typescript
-function verifyShopierCallback(data: ShopierCallbackData): boolean {
-  const signatureString = `${API_KEY}${WEBSITE_INDEX}${platform_order_id}${total_order_value}${currency}${random_nr}${API_SECRET}`;
+// Callback doğrulama - PHP formatına göre
+static verifyCallback(postData: any): boolean {
+  const {
+    platform_order_id,
+    payment_status,
+    total_order_value,
+    currency,
+    signature,
+    random_nr
+  } = postData;
+
+  // Beklenen imzayı hesapla - PHP formatına göre
+  const signatureString = `${this.API_KEY}${this.WEBSITE_INDEX}${platform_order_id}${total_order_value}${currency}${random_nr}${this.API_SECRET}`;
   const expectedSignature = CryptoJS.SHA256(signatureString).toString();
-  return signature === expectedSignature;
+
+  return receivedSignature === expectedSignature;
 }
 ```
 
-## 📊 Ödeme Durumları
-
-| Status | Açıklama |
-|--------|----------|
-| `1` | Ödeme başarılı |
-| `0` | Ödeme başarısız |
-| `2` | Ödeme beklemede |
-
-## 🧪 Test
-
-### Test Dosyası
-`test-shopier-integration.html` dosyasını kullanarak entegrasyonu test edebilirsiniz.
-
-### Test Adımları
-1. Test dosyasını tarayıcıda açın
-2. Form bilgilerini doldurun
-3. "Shopier ile Ödeme Yap" butonuna tıklayın
-4. Debug bilgilerini kontrol edin
-5. Shopier ödeme sayfasına yönlendirildiğinizi doğrulayın
-
-## 🔧 Konfigürasyon
-
-### Test Modu
+### API Anahtarları
 ```typescript
-private static readonly TEST_MODE = true;
+private static readonly API_KEY = '107a7821174596da16176ffe2138b709';
+private static readonly API_SECRET = '952d2f8f485d0d74391343c1606aa4cb';
+private static readonly WEBSITE_INDEX = 1;
+```
+
+## 📊 Form Verileri
+
+### Gerekli Alanlar
+- `API_key`: Shopier API anahtarı
+- `website_index`: Website indeksi
+- `platform_order_id`: Benzersiz sipariş ID'si
+- `product_name`: Ürün adı
+- `buyer_name`: Müşteri adı
+- `buyer_surname`: Müşteri soyadı
+- `buyer_email`: Müşteri e-postası
+- `buyer_phone`: Müşteri telefonu
+- `billing_address`: Fatura adresi
+- `billing_city`: Şehir
+- `billing_country`: Ülke
+- `billing_postcode`: Posta kodu
+- `total_order_value`: Toplam tutar
+- `currency`: Para birimi
+- `callback_url`: Callback URL'i
+- `payment_channel`: Ödeme kanalı
+- `is_installment`: Taksit durumu
+- `signature`: HMAC-SHA256 imzası
+
+## 🔄 Callback İşlemi
+
+### Callback URL
+```
+https://numaparfume.com/payment-callback
+```
+
+### Callback Verileri
+```typescript
+interface CallbackData {
+  platform_order_id: string;
+  payment_status: string;
+  total_order_value: string;
+  currency: string;
+  signature: string;
+  random_nr: string;
+}
+```
+
+## 🐛 Hata Yönetimi
+
+### Yaygın Hatalar
+1. **İmza Hatası**: API anahtarları yanlış
+2. **Form Hatası**: Eksik veya yanlış form verisi
+3. **Network Hatası**: Shopier sunucusuna bağlantı sorunu
+
+### Debug Modu
+```typescript
 private static readonly DEBUG_MODE = true;
 ```
 
-### Site URL
-```typescript
-private static readonly SITE_URL = typeof window !== 'undefined' && window.location.hostname === 'localhost' 
-  ? `${window.location.protocol}//${window.location.host}`
-  : 'https://numaparfume.com';
-```
+Debug modunda console'da şu bilgiler görünür:
+- Signature String
+- Generated Signature
+- Payment Data
+- API Response
 
-## 📁 Dosya Yapısı
+## 📝 Notlar
 
-```
-src/
-├── services/
-│   └── shopierService.ts          # Ana Shopier servisi
-├── components/
-│   ├── CartModal.tsx              # Sepet modalı
-│   ├── PaymentCallback.tsx        # Ödeme callback'i
-│   ├── PaymentSuccess.tsx         # Başarılı ödeme
-│   └── PaymentFailed.tsx          # Başarısız ödeme
-└── api/
-    └── shopier-callback.ts        # Backend callback handler
-```
+### Önemli Noktalar
+1. **İmza Hesaplama**: PHP `hash_hmac('SHA256', implode('', $payment_data), $api_secret)` formatına uygun
+2. **Form Submit**: JavaScript ile otomatik form submit
+3. **Callback**: Güvenli callback doğrulama
+4. **Test Mode**: Test modunda gerçek ödeme yapılmaz
 
-## 🚨 Hata Yönetimi
+### Geliştirme İpuçları
+1. Test modunda çalışırken gerçek ödeme yapılmaz
+2. Debug modu aktifken console'da tüm bilgiler görünür
+3. Callback URL'i production'da doğru ayarlanmalı
+4. API anahtarları güvenli şekilde saklanmalı
 
-### Yaygın Hatalar
+---
 
-1. **İmza Doğrulama Hatası**
-   - API_SECRET'in doğru olduğunu kontrol edin
-   - Signature string'in doğru oluşturulduğunu kontrol edin
-
-2. **Form Submit Hatası**
-   - Tüm gerekli alanların doldurulduğunu kontrol edin
-   - API_KEY'in doğru olduğunu kontrol edin
-
-3. **Callback Hatası**
-   - Callback URL'in doğru olduğunu kontrol edin
-   - Backend handler'ın çalıştığını kontrol edin
-
-## 📞 Destek
-
-Entegrasyon ile ilgili sorunlar için:
-
-1. Console loglarını kontrol edin
-2. Test dosyasını kullanın
-3. Shopier dokümantasyonunu inceleyin
-4. API bilgilerini doğrulayın
-
-## 🔄 Güncellemeler
-
-### v2.0 (Güncel)
-- ✅ Verilen örnek koda göre güncellendi
-- ✅ Direkt form yöntemi öncelikli hale getirildi
-- ✅ İmza doğrulaması iyileştirildi
-- ✅ Callback güvenliği artırıldı
-- ✅ Test dosyası eklendi
-
-### v1.0 (Önceki)
-- Modern API kullanımı
-- Fallback form yöntemi
-- Temel callback işleme
+**Son Güncelleme**: 2024-12-19  
+**Versiyon**: 2.1.0  
+**PHP Uyumluluğu**: ✅ Tamamlandı

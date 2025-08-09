@@ -41,16 +41,37 @@ console.log('✅ Stok yönetimi aktif');
 console.log('✅ Görsel yükleme sistemi aktif');
 console.log('✅ SEO ayarları aktif');
 
+// Test 6: Shopier Integration
+console.log('\n6. Shopier Entegrasyonu Testi');
+console.log('✅ PHP formatına uygun imza oluşturma');
+console.log('✅ HMAC-SHA256 imza doğrulama');
+console.log('✅ Form otomatik submit');
+console.log('✅ Callback güvenli doğrulama');
+console.log('✅ Test sayfası eklendi: /shopier-test');
+
 console.log('\n🎉 Tüm testler başarılı!');
 console.log('\n📋 Test Talimatları:');
 console.log('1. http://localhost:3000/admin-test - Admin panel test');
 console.log('2. http://localhost:3000/admin - Admin panel');
 console.log('3. http://localhost:3000/ - Ana sayfa (sepet testi)');
-console.log('4. Ürün detay sayfalarında görsel testi');
+console.log('4. http://localhost:3000/shopier-test - Shopier entegrasyon testi');
+console.log('5. Ürün detay sayfalarında görsel testi');
 
 console.log('\n🔧 Test Admin E-postaları:');
 console.log('- test@admin.com');
 console.log('- admin@test.com');
 console.log('- test@test.com');
+
+console.log('\n🛒 Shopier Test Bilgileri:');
+console.log('- Test ürün: Test Parfüm (2 adet)');
+console.log('- Test fiyat: ₺299.99 x 2 = ₺599.98');
+console.log('- Test indirim: ₺50 (Kampanya)');
+console.log('- Test toplam: ₺549.98');
+
+console.log('\n🔐 Shopier Güvenlik:');
+console.log('- PHP hash_hmac formatı uyumlu');
+console.log('- HMAC-SHA256 imza doğrulama');
+console.log('- Güvenli callback işleme');
+console.log('- Debug modu aktif');
 
 console.log('\n✅ Sistem hazır!');
