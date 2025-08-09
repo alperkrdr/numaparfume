@@ -20,6 +20,7 @@ const PaymentCallback = lazy(() => import('./components/PaymentCallback'));
 const PaymentSuccess = lazy(() => import('./components/PaymentSuccess'));
 const PaymentFailed = lazy(() => import('./components/PaymentFailed'));
 const ShopierTest = lazy(() => import('./components/ShopierTest'));
+const CheckoutPage = lazy(() => import('./components/CheckoutPage'));
 
 // Loading spinner component
 const LoadingSpinner = () => (
@@ -196,6 +197,16 @@ function App() {
           <Route path="/payment-failed" element={
             <Suspense fallback={<LoadingSpinner />}>
               <PaymentFailed />
+            </Suspense>
+          } />
+
+          {/* Checkout Page */}
+          <Route path="/checkout" element={
+            <Suspense fallback={<LoadingSpinner />}>
+              <CampaignBar />
+              <Header onSearch={handleSearch} onCategorySelect={handleCategorySelect} />
+              <CheckoutPage />
+              <Footer />
             </Suspense>
           } />
           

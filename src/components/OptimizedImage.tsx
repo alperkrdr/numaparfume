@@ -64,10 +64,10 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
 
   // Load image when in view
   useEffect(() => {
-    if (isInView && src && !imageSrc) {
+    if (isInView && src) {
       setImageSrc(src);
     }
-  }, [isInView, src, imageSrc]);
+  }, [isInView, src]);
 
   const handleLoad = useCallback(() => {
     setIsLoaded(true);

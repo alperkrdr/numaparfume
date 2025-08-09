@@ -144,6 +144,20 @@ export class StockService {
       // Aylık stok hareketi (son 6 ay)
       const monthlyStockMovement = await this.getMonthlyStockMovement();
 
+      // Satış analitikleri
+      const salesHistory = await this.getSalesHistory();
+      const totalRevenue = salesHistory.reduce((sum, sale) => {
+        if (sale.salePriceType === 'manual' && sale.manualSalePrice) {
+          return sum + (sale.manualSalePrice * sale.quantity);
+        }
+        const product = products.find(p => p.id === sale.productId);
+        return sum + ((product?.price || 0) * sale.quantity);
+      }, 0);
+
+      const totalSalesCount = salesHistory.length;
+      const totalSoldItems = salesHistory.reduce((sum, sale) => sum + sale.quantity, 0);
+      const averageOrderValue = totalSalesCount > 0 ? totalRevenue / totalSalesCount : 0;
+
       return {
         totalProducts,
         inStockProducts,
@@ -153,7 +167,11 @@ export class StockService {
         averageStockLevel,
         topSellingProducts,
         recentStockChanges,
-        monthlyStockMovement
+        monthlyStockMovement,
+        totalRevenue,
+        totalSalesCount,
+        totalSoldItems,
+        averageOrderValue
       };
     } catch (error) {
       console.error('❌ Stok analitikleri alma hatası:', error);

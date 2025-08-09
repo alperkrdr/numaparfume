@@ -689,19 +689,41 @@ export const AdminPanel: React.FC = () => {
 
   // CSV export fonksiyonu
   const exportSalesToCSV = () => {
-    if (!filteredSales.length) return;
+    if (!filteredSales.length) {
+      alert('Dışa aktarılacak veri bulunamadı. Lütfen tarih aralığını kontrol edin.');
+      return;
+    }
+
     const header = ['Tarih', 'Ürün ID', 'Adet', 'Fiyat Tipi', 'Satış Fiyatı', 'Açıklama', 'Admin'];
+
+    // Helper to sanitize and quote CSV fields
+    const escapeCsvCell = (cell: any): string => {
+      const cellStr = String(cell === null || cell === undefined ? '' : cell);
+      // If the cell contains a semicolon, a double quote, or a newline, wrap it in double quotes.
+      if (/[";\n]/.test(cellStr)) {
+        return `"${cellStr.replace(/"/g, '""')}"`;
+      }
+      return cellStr;
+    };
+
     const rows = filteredSales.map(sale => [
-      sale.date,
+      new Date(sale.date).toLocaleString('tr-TR'),
       sale.productId,
       sale.quantity,
       sale.salePriceType || 'site',
       sale.salePriceType === 'manual' ? sale.manualSalePrice : '',
       sale.reason,
       sale.adminEmail || ''
-    ]);
-    const csvContent = [header, ...rows].map(e => e.join(',')).join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv' });
+    ].map(escapeCsvCell));
+
+    const csvContent = [
+      header.map(escapeCsvCell).join(';'),
+      ...rows.map(row => row.join(';'))
+    ].join('\n');
+
+    // Add BOM for UTF-8 Excel compatibility
+    const bom = '\uFEFF';
+    const blob = new Blob([bom + csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -1255,47 +1277,90 @@ export const AdminPanel: React.FC = () => {
 
                 {/* Stok Analitikleri */}
                 {!stockLoading && stockAnalytics && (
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-blue-600 text-sm font-medium">Toplam Ürün</p>
-                          <p className="text-2xl font-bold text-blue-900">{stockAnalytics.totalProducts}</p>
+                  <>
+                    <h3 className="text-lg font-semibold text-gray-800 mb-4">Ekonomi Özeti</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                      <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-green-600 text-sm font-medium">Toplam Ciro</p>
+                            <p className="text-2xl font-bold text-green-900">₺{stockAnalytics.totalRevenue?.toLocaleString('tr-TR') || 0}</p>
+                          </div>
+                          <BarChart3 className="w-8 h-8 text-green-600" />
                         </div>
-                        <Package className="w-8 h-8 text-blue-600" />
+                      </div>
+                      <div className="bg-indigo-50 p-4 rounded-lg border border-indigo-200">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-indigo-600 text-sm font-medium">Toplam Satış</p>
+                            <p className="text-2xl font-bold text-indigo-900">{stockAnalytics.totalSalesCount || 0}</p>
+                          </div>
+                          <ShoppingBag className="w-8 h-8 text-indigo-600" />
+                        </div>
+                      </div>
+                      <div className="bg-cyan-50 p-4 rounded-lg border border-cyan-200">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-cyan-600 text-sm font-medium">Satılan Ürün</p>
+                            <p className="text-2xl font-bold text-cyan-900">{stockAnalytics.totalSoldItems || 0}</p>
+                          </div>
+                          <Package className="w-8 h-8 text-cyan-600" />
+                        </div>
+                      </div>
+                      <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-orange-600 text-sm font-medium">Ort. Sipariş Değeri</p>
+                            <p className="text-2xl font-bold text-orange-900">₺{stockAnalytics.averageOrderValue?.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || 0}</p>
+                          </div>
+                          <TrendingUp className="w-8 h-8 text-orange-600" />
+                        </div>
                       </div>
                     </div>
-                    
-                    <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-green-600 text-sm font-medium">Stokta Var</p>
-                          <p className="text-2xl font-bold text-green-900">{stockAnalytics.inStockProducts}</p>
+
+                    <h3 className="text-lg font-semibold text-gray-800 mb-4">Stok Özeti</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                      <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-blue-600 text-sm font-medium">Toplam Ürün Çeşidi</p>
+                            <p className="text-2xl font-bold text-blue-900">{stockAnalytics.totalProducts}</p>
+                          </div>
+                          <Package className="w-8 h-8 text-blue-600" />
                         </div>
-                        <TrendingUp className="w-8 h-8 text-green-600" />
+                      </div>
+
+                      <div className="bg-teal-50 p-4 rounded-lg border border-teal-200">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-teal-600 text-sm font-medium">Stoktaki Ürünler</p>
+                            <p className="text-2xl font-bold text-teal-900">{stockAnalytics.inStockProducts}</p>
+                          </div>
+                          <TrendingUp className="w-8 h-8 text-teal-600" />
+                        </div>
+                      </div>
+
+                      <div className="bg-red-50 p-4 rounded-lg border border-red-200">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-red-600 text-sm font-medium">Tükenen Ürünler</p>
+                            <p className="text-2xl font-bold text-red-900">{stockAnalytics.outOfStockProducts}</p>
+                          </div>
+                          <AlertTriangle className="w-8 h-8 text-red-600" />
+                        </div>
+                      </div>
+
+                      <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-yellow-600 text-sm font-medium">Kritik Stok</p>
+                            <p className="text-2xl font-bold text-yellow-900">{stockAnalytics.lowStockProducts}</p>
+                          </div>
+                          <AlertTriangle className="w-8 h-8 text-yellow-600" />
+                        </div>
                       </div>
                     </div>
-                    
-                    <div className="bg-red-50 p-4 rounded-lg border border-red-200">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-red-600 text-sm font-medium">Stokta Yok</p>
-                          <p className="text-2xl font-bold text-red-900">{stockAnalytics.outOfStockProducts}</p>
-                        </div>
-                        <AlertTriangle className="w-8 h-8 text-red-600" />
-                      </div>
-                    </div>
-                    
-                    <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-yellow-600 text-sm font-medium">Düşük Stok</p>
-                          <p className="text-2xl font-bold text-yellow-900">{stockAnalytics.lowStockProducts}</p>
-                        </div>
-                        <AlertTriangle className="w-8 h-8 text-yellow-600" />
-                      </div>
-                    </div>
-                  </div>
+                  </>
                 )}
 
                 {/* Stok Uyarıları */}

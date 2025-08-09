@@ -157,6 +157,11 @@ export interface StockAnalytics {
   topSellingProducts: Product[];
   recentStockChanges: StockHistory[];
   monthlyStockMovement: StockMovementData[];
+  // Ekonomi görünümü için
+  totalRevenue: number;
+  totalSalesCount: number;
+  totalSoldItems: number;
+  averageOrderValue: number;
 }
 
 export interface StockMovementData {
