@@ -20,6 +20,7 @@ const AdminPanel = lazy(() => import('./components/AdminPanel').then(module => (
 const PaymentCallback = lazy(() => import('./components/PaymentCallback'));
 const PaymentSuccess = lazy(() => import('./components/PaymentSuccess'));
 const PaymentFailed = lazy(() => import('./components/PaymentFailed'));
+const CheckoutPage = lazy(() => import('./pages/CheckoutPage'));
 
 // Loading spinner component
 const LoadingSpinner = () => (
@@ -170,6 +171,11 @@ function App() {
                 <PaymentSuccess />
               </Suspense>
             } />
+          <Route path="/checkout" element={
+            <Suspense fallback={<LoadingSpinner />}>
+              <CheckoutPage />
+            </Suspense>
+          } />
             <Route path="/payment-failed" element={
               <Suspense fallback={<LoadingSpinner />}>
                 <PaymentFailed />

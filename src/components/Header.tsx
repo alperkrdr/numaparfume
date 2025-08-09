@@ -4,7 +4,6 @@ import { useSettings } from '../hooks/useSettings';
 import { useCart } from '../hooks/useCart';
 import { useFavorites } from '../hooks/useFavorites';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import CartModal from './CartModal';
 
 interface HeaderProps {
   onSearch: (query: string) => void;
@@ -14,16 +13,10 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ onSearch, onCategorySelect }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [isCartOpen, setIsCartOpen] = useState(false);
   
   const { settings } = useSettings();
   
   const {
-    cartItems,
-    updateQuantity,
-    removeFromCart,
-    clearCart,
-    getCartTotal,
     getCartItemCount,
   } = useCart();
   
@@ -71,7 +64,7 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onCategorySelect }) => {
   };
 
   const handleCartClick = () => {
-    setIsCartOpen(true);
+    navigate('/checkout');
   };
 
   const handleFavoritesClick = () => {
@@ -314,17 +307,6 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onCategorySelect }) => {
           </div>
         )}
       </header>
-
-      {/* Cart Modal */}
-      <CartModal
-        isOpen={isCartOpen}
-        onClose={() => setIsCartOpen(false)}
-        cartItems={cartItems}
-        updateQuantity={updateQuantity}
-        removeFromCart={removeFromCart}
-        clearCart={clearCart}
-        getCartTotal={getCartTotal}
-      />
     </>
   );
 };
