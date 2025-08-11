@@ -40,13 +40,13 @@ export default function handler(req: VercelRequest, res: VercelResponse) {
   });
 
   const platformOrderId = `NUMA_${Date.now()}`;
-  const productName = cartItems.length === 1
-    ? cartItems[0].product.name
-    : `${cartItems.length} Ürün - Sepetinizdeki Ürünler`;
 
-  shopier.setProductData(productName, 1); // ProductType: 1 for physical goods
+  // The shopier-api library seems to handle product name internally.
+  // We just need to set the order ID and total amount.
+  // The user's example shows generatePaymentHTML taking only one argument.
+  shopier.setOrder(platformOrderId, totalAmount);
 
-  const paymentHTML = shopier.generatePaymentHTML(totalAmount, platformOrderId);
+  const paymentHTML = shopier.generatePaymentHTML(totalAmount);
 
   res.status(200).send({ html: paymentHTML });
 }
