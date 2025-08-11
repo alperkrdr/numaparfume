@@ -19,7 +19,6 @@ const AdminPanel = lazy(() => import('./components/AdminPanel').then(module => (
 const PaymentCallback = lazy(() => import('./components/PaymentCallback'));
 const PaymentSuccess = lazy(() => import('./components/PaymentSuccess'));
 const PaymentFailed = lazy(() => import('./components/PaymentFailed'));
-const ShopierTest = lazy(() => import('./components/ShopierTest'));
 const CheckoutPage = lazy(() => import('./components/CheckoutPage'));
 
 // Loading spinner component
@@ -122,13 +121,6 @@ function App() {
                 </a>
               </div>
             </div>
-          } />
-          
-          {/* Shopier Test Route */}
-          <Route path="/shopier-test" element={
-            <Suspense fallback={<LoadingSpinner />}>
-              <ShopierTest />
-            </Suspense>
           } />
           
           {/* Product Detail Page */}
