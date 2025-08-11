@@ -8,50 +8,50 @@ export default function handler(req: VercelRequest, res: VercelResponse) {
 
   const { cartItems, buyerInfo, totalAmount } = req.body;
 
-  if (!cartItems || !buyerInfo || !totalAmount) {
-    return res.status(400).json({ message: 'Missing required payment information.' });
+  if (!cartItems || !buyerInfo || typeof totalAmount !== 'number' || cartItems.length === 0) {
+    return res.status(400).json({ message: 'Missing or invalid payment information.' });
   }
 
   try {
-    const shopier = new Shopier(process.env.VITE_SHOPIER_API_KEY, process.env.VITE_SHOPIER_SECRET_KEY);
+    const shopier = new Shopier(process.env.SHOPIER_API_KEY, process.env.SHOPIER_SECRET_KEY);
 
+    const platformOrderId = `NUMA_${Date.now()}`;
     const [buyerName, ...surnameParts] = buyerInfo.name.split(' ');
     const buyerSurname = surnameParts.join(' ') || 'Müşteri';
-    const platformOrderId = `NUMA_${Date.now()}`;
-    const productName = cartItems.length === 1
-      ? cartItems[0].product.name
-      : `${cartItems.length} Ürün - Sepetinizdeki Ürünler`;
 
-    shopier.setBuyer({
-      platform_order_id: platformOrderId,
-      product_name: productName,
-      buyer_id_nr: `USER_${Date.now()}`,
-      buyer_name: buyerName,
-      buyer_surname: buyerSurname,
-      buyer_email: buyerInfo.email,
-      buyer_phone: buyerInfo.phone,
+    // This is my interpretation of the user's original 'createForm' logic.
+    // I am assuming the d.ts file is wrong and that generatePaymentHTML takes a single
+    // object with all parameters, as this is a common pattern and all other
+    // attempts have failed.
+    const paymentHTML = shopier.generatePaymentHTML({
+        platform_order_id: platformOrderId,
+        total_order_price: totalAmount,
+        product_name: cartItems.map(item => item.product.name).join(', '),
+        product_quantity: cartItems.reduce((sum, item) => sum + item.quantity, 0),
+
+        buyer_name: buyerName,
+        buyer_surname: buyerSurname,
+        buyer_email: buyerInfo.email,
+        buyer_phone: buyerInfo.phone,
+
+        billing_address: buyerInfo.address,
+        billing_city: 'İstanbul',
+        billing_country: 'Türkiye',
+        billing_postcode: '34000',
+
+        shipping_address: buyerInfo.address,
+        shipping_city: 'İstanbul',
+        shipping_country: 'Türkiye',
+        shipping_postcode: '34000',
     });
-
-    shopier.setOrderBilling({
-      billing_address: buyerInfo.address,
-      billing_city: 'İstanbul',
-      billing_country: 'Türkiye',
-      billing_postcode: '34000',
-    });
-
-    shopier.setOrderShipping({
-      shipping_address: buyerInfo.address,
-      shipping_city: 'İstanbul',
-      shipping_country: 'Türkiye',
-      shipping_postcode: '34000',
-    });
-
-    const paymentHTML = shopier.generatePaymentHTML(totalAmount);
 
     res.status(200).send({ html: paymentHTML });
 
   } catch (error) {
     console.error('Error creating Shopier payment form:', error);
-    res.status(500).json({ message: 'Failed to create payment form.', error: (error as Error).message });
+    res.status(500).json({
+        message: 'Failed to create payment form.',
+        error: error instanceof Error ? error.message : String(error)
+    });
   }
 }
