@@ -37,8 +37,7 @@ export default defineConfig({
           'shop': [
             'src/components/ProductCard.tsx',
             'src/components/ProductDetail.tsx',
-            'src/components/CartModal.tsx',
-            'src/services/shopierService.ts'
+            'src/components/CartModal.tsx'
           ],
           'forum': [
             'src/components/Forum.tsx',
