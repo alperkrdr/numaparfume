@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useCart } from '../hooks/useCart';
 import { useSettings } from '../hooks/useSettings';
-import { ShopierService } from '../services/shopierService';
 import { CampaignService } from '../services/campaignService';
 import { User, Mail, Phone, Home, CreditCard, ShoppingBag, Tag, Gift } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -73,48 +72,39 @@ const CheckoutPage = () => {
     setIsProcessingPayment(true);
     try {
       const finalTotal = campaignData?.campaignApplied ? campaignData.finalTotal : cartTotal;
-      const shopierCartItems = cartItems.map(item => ({
-        product: {
-          name: item.product.name,
-          price: item.product.price,
-          currency: 'TRY',
-          description: item.product.description,
-          image_url: item.product.image,
-          category: item.product.category
-        },
-        quantity: item.quantity
-      }));
 
-      if (campaignData?.campaignApplied && campaignData.discountAmount > 0) {
-        shopierCartItems.push({
-          product: {
-            name: `${campaignData.campaignTitle} - İndirim`,
-            price: -campaignData.discountAmount,
-            currency: 'TRY',
-            description: campaignData.campaignDescription || 'Kampanya indirimi',
-            image_url: '',
-            category: 'unisex'
-          },
-          quantity: 1
-        });
+      const response = await fetch('/api/create-payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cartItems,
+          buyerInfo: customerInfo,
+          discountInfo: campaignData,
+          totalAmount: finalTotal,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Ödeme formu oluşturulamadı.');
       }
 
-      await ShopierService.createCartPayment(
-        shopierCartItems,
-        {
-          name: customerInfo.name,
-          email: customerInfo.email,
-          phone: customerInfo.phone,
-          address: customerInfo.address
-        },
-        campaignData?.campaignApplied && campaignData.campaignTitle ? {
-          discountAmount: campaignData.discountAmount,
-          campaignTitle: campaignData.campaignTitle
-        } : undefined
-      );
+      const data = await response.json();
 
-      clearCart();
-      // Yönlendirme ShopierService tarafından halledilir.
+      if (data.html) {
+        // Create a temporary div to inject and submit the form
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = data.html;
+        document.body.appendChild(tempDiv);
+        const shopierForm = document.getElementById('shopier_form') as HTMLFormElement;
+        if (shopierForm) {
+          shopierForm.submit();
+          clearCart();
+        } else {
+          throw new Error('Shopier formu bulunamadı.');
+        }
+      } else {
+        throw new Error('Geçersiz yanıt alındı.');
+      }
     } catch (error) {
       console.error('Checkout error:', error);
       alert('Ödeme işlemi başlatılamadı. Lütfen tekrar deneyin.');

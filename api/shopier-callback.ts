@@ -1,138 +1,38 @@
-import express from 'express';
-import * as CryptoJS from 'crypto-js';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { Shopier } from 'shopier-api';
 
-// Shopier API bilgileri
-const SHOPIER_API_KEY = '107a7821174596da16176ffe2138b709';
-const SHOPIER_API_SECRET = '952d2f8f485d0d74391343c1606aa4cb';
-const SHOPIER_WEBSITE_INDEX = 1;
-
-interface ShopierCallbackData {
-  platform_order_id: string;
-  payment_status: string;
-  total_order_value: string;
-  currency: string;
-  installment?: string;
-  test_mode?: string;
-  merchant_id?: string;
-  random_nr: string;
-  signature: string;
-}
-
-/**
- * Shopier callback doğrulama fonksiyonu
- */
-function verifyShopierCallback(data: ShopierCallbackData): boolean {
-  try {
-    const {
-      platform_order_id,
-      payment_status,
-      total_order_value,
-      currency,
-      random_nr,
-      signature
-    } = data;
-
-    // Beklenen imzayı hesapla
-    const signatureString = `${SHOPIER_API_KEY}${SHOPIER_WEBSITE_INDEX}${platform_order_id}${total_order_value}${currency}${random_nr}${SHOPIER_API_SECRET}`;
-    const expectedSignature = CryptoJS.SHA256(signatureString).toString();
-
-    console.log('🔐 Callback doğrulama:');
-    console.log('Received Signature:', signature);
-    console.log('Expected Signature:', expectedSignature);
-    console.log('Signature String:', signatureString);
-
-    return signature === expectedSignature;
-  } catch (error) {
-    console.error('❌ Callback doğrulama hatası:', error);
-    return false;
-  }
-}
-
-/**
- * Shopier callback handler
- */
-export default async function handler(req: express.Request, res: express.Response) {
+export default function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+    return res.status(405).json({ message: 'Only POST requests are allowed' });
   }
 
+  // Initialize with environment variables for security
+  const shopier = new Shopier(process.env.VITE_SHOPIER_API_KEY, process.env.VITE_SHOPIER_SECRET_KEY);
+
   try {
-    console.log('🔄 Shopier callback alındı:', req.body);
-
-    const callbackData: ShopierCallbackData = {
-      platform_order_id: req.body.platform_order_id,
-      payment_status: req.body.payment_status,
-      total_order_value: req.body.total_order_value,
-      currency: req.body.currency,
-      installment: req.body.installment,
-      test_mode: req.body.test_mode,
-      merchant_id: req.body.merchant_id,
-      random_nr: req.body.random_nr,
-      signature: req.body.signature
-    };
-
-    // İmza doğrulaması
-    const isValid = verifyShopierCallback(callbackData);
+    // The shopier-api library's callback function handles signature verification.
+    // It will throw an error if the signature is invalid.
+    const result = shopier.callback(req.body, process.env.VITE_SHOPIER_SECRET_KEY);
     
-    if (!isValid) {
-      console.error('❌ Callback imza doğrulaması başarısız!');
-      return res.status(400).json({ error: 'Invalid signature' });
-    }
+    console.log('Shopier Callback Verification Result:', result);
 
-    console.log('✅ Callback doğrulaması başarılı');
+    // If the code reaches here, the signature is valid.
 
-    // Ödeme durumunu kontrol et
-    const paymentStatus = callbackData.payment_status;
-    const orderId = callbackData.platform_order_id;
-    const amount = callbackData.total_order_value;
-    const currency = callbackData.currency;
+    // TODO: Add logic here to update the order status in your database
+    // based on the payment status from Shopier.
+    // Example:
+    // const orderId = result.platform_order_id;
+    // const paymentId = result.payment_id;
+    // const status = result.status; // 'success' or 'failure'
+    // await updateOrderStatusInDB(orderId, status, paymentId);
 
-    switch (paymentStatus) {
-      case '1': // Ödeme başarılı
-        console.log('✅ Başarılı ödeme:', orderId, amount, currency);
-        
-        // Burada sipariş bilgilerini veritabanına kaydedebilirsiniz
-        // Örnek: await saveOrderToDatabase(orderId, amount, currency);
-        
-        // Başarılı yanıt
-        res.status(200).json({ 
-          success: true, 
-          message: 'Payment processed successfully',
-          orderId,
-          amount,
-          currency
-        });
-        break;
+    console.log(`Payment status for Order ID ${result.platform_order_id}: ${result.status}`);
 
-      case '0': // Ödeme başarısız
-        console.log('❌ Başarısız ödeme:', orderId);
-        res.status(200).json({ 
-          success: false, 
-          message: 'Payment failed',
-          orderId
-        });
-        break;
-
-      case '2': // Ödeme beklemede
-        console.log('⏳ Bekleyen ödeme:', orderId);
-        res.status(200).json({ 
-          success: true, 
-          message: 'Payment pending',
-          orderId
-        });
-        break;
-
-      default:
-        console.log('❓ Bilinmeyen ödeme durumu:', paymentStatus, orderId);
-        res.status(400).json({ 
-          error: 'Unknown payment status',
-          orderId,
-          status: paymentStatus
-        });
-    }
+    // Respond to Shopier to acknowledge receipt
+    res.status(200).send('OK');
 
   } catch (error) {
-    console.error('❌ Callback işleme hatası:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('Shopier Callback Verification Failed:', error);
+    res.status(400).send('Invalid signature or callback data');
   }
 }
