@@ -24,40 +24,46 @@ module.exports = (req, res) => {
     const [buyerName, ...surnameParts] = buyerInfo.name.split(' ');
     const buyerSurname = surnameParts.join(' ') || 'Müşteri';
     const productName = cartItems.map(item => item.product.name).join(', ');
-
     const randomNr = Math.floor(Math.random() * 999999);
-    const data = `${platformOrderId}${buyerInfo.email}${totalAmount}${randomNr}`;
-    const signature = crypto.createHmac('sha256', apiSecret).update(data).digest('base64');
 
-    const formFields = {
+    const paymentData = {
         API_key: apiKey,
         website_index: websiteIndex,
         platform_order_id: platformOrderId,
         product_name: productName,
         product_type: '1', // 1: Physical, 2: Digital
-        total_order_value: totalAmount.toFixed(2),
-        currency: 'TRY',
-
         buyer_name: buyerName,
         buyer_surname: buyerSurname,
         buyer_email: buyerInfo.email,
         buyer_phone: buyerInfo.phone,
-
         billing_address: buyerInfo.address,
         billing_city: 'İstanbul',
         billing_country: 'TR',
         billing_postcode: '34000',
-
         shipping_address: buyerInfo.address,
         shipping_city: 'İstanbul',
         shipping_country: 'TR',
         shipping_postcode: '34000',
-
-        random_nr: randomNr,
-        signature: signature,
-
-        "continue_url": `https://www.numaparfume.com/payment-success?orderId=${platformOrderId}`
+        total_order_value: totalAmount.toFixed(2),
+        currency: 'TRY',
+        platform: 0, // 0: Web, 1: Mobile, 2: API
+        is_installment: '0', // 0: No, 1: Yes
+        "continue_url": `https://www.numaparfume.com/payment-success?orderId=${platformOrderId}`,
+        random_nr: randomNr.toString(),
     };
+
+    const signatureData = [
+        paymentData.platform_order_id,
+        paymentData.total_order_value,
+        paymentData.currency,
+        paymentData.random_nr
+    ].join('');
+
+    const signature = crypto.createHmac('sha256', apiSecret)
+                            .update(signatureData)
+                            .digest('hex');
+
+    const formFields = { ...paymentData, signature };
 
     let formHTML = '<form id="shopier_form" method="post" action="https://www.shopier.com/ShowProduct/api_pay4.php">';
     for (const [key, value] of Object.entries(formFields)) {
