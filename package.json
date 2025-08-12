@@ -21,8 +21,7 @@
     "react-dom": "^18.3.1",
     "react-helmet-async": "^2.0.5",
     "react-router-dom": "^6.20.1",
-    "serve": "^14.2.4",
-    "shopier-api": "^1.1.4"
+    "serve": "^14.2.4"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.1",
