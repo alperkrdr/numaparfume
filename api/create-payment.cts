@@ -2,8 +2,12 @@ const { VercelRequest, VercelResponse } = require('@vercel/node');
 const { Shopier } = require('shopier-api');
 
 module.exports = (req, res) => {
+  console.log(`Received request with method: ${req.method}`);
   if (req.method !== 'POST') {
-    return res.status(405).json({ message: 'Only POST requests are allowed' });
+    return res.status(405).json({
+      message: 'Only POST requests are allowed',
+      received_method: req.method
+    });
   }
 
   const { cartItems, buyerInfo, totalAmount } = req.body;
